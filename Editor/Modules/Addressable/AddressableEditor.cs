@@ -6,12 +6,12 @@ using UnityEditor.AddressableAssets;
 using UnityEngine;
 using UnityEditor.AddressableAssets.Settings.GroupSchemas;
 using System.IO;
-using FileUtil = DCFrame.FileUtil;
+using FileUtil = DCFrame.Utility.FileUtil;
 
 public class AddressableEditor : Editor {
     [MenuItem("Tools/资源项/打 AA 包")]
     public static void PackageAddressable() {
-        AARules = AssetDatabase.LoadAssetAtPath<AARules>(DCConst.AARulesPath);
+        AARules = AssetDatabase.LoadAssetAtPath<AARules>(AAConst.AARulesPath);
         if (AARules == null) {
             Debug.LogError("找不到AA规则文件");
             return;
@@ -27,11 +27,11 @@ public class AddressableEditor : Editor {
         }
         List<float> progressList = new List<float>() { 0, 0.3f, 0.6f, 0.9f, 1 };
         EditorUtility.DisplayProgressBar(ProgressTitle, "打AA包开始", progressList[0]);
-        var groupSingle = InitGroupData(DCConst.AAGroupSingle);
+        var groupSingle = InitGroupData(AAConst.AAGroupSingle);
         DealWithGroupSingle(groupSingle, progressList[0], progressList[1]);
-        var groupLabel = InitGroupData(DCConst.AAGroupLabel);
+        var groupLabel = InitGroupData(AAConst.AAGroupLabel);
         DealWithGroupLabel(groupLabel, progressList[1], progressList[2]);
-        var groupFolder = InitGroupData(DCConst.AAGroupFolder);
+        var groupFolder = InitGroupData(AAConst.AAGroupFolder);
         DealWithGroupFolder(groupFolder, progressList[2], progressList[3]);
         AssetDatabase.SaveAssets();
         EditorUtility.ClearProgressBar();

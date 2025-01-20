@@ -1,8 +1,5 @@
 namespace DCFrame {
-    public class DCConst {
-
-        #region Addressable
-
+    public struct AAConst {
         /// <summary>
         /// AA Rules 规则路径
         /// </summary>
@@ -19,8 +16,6 @@ namespace DCFrame {
         /// AA 标签打组
         /// </summary>
         public const string AAGroupLabel = "AAGroupLabel";
-        
-        #endregion
     }
 }
 

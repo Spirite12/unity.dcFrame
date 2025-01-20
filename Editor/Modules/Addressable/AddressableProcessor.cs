@@ -6,7 +6,7 @@ using UnityEditor;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEngine;
-using FileUtil = DCFrame.FileUtil;
+using FileUtil = DCFrame.Utility.FileUtil;
 
 public class AddressableProcessor : AssetPostprocessor {
 
@@ -44,7 +44,7 @@ public class AddressableProcessor : AssetPostprocessor {
     /// </summary>
     public static void InitData(bool isForce = false) {
         if (AARules == null) {
-            AARules = AssetDatabase.LoadAssetAtPath<AARules>(DCConst.AARulesPath);
+            AARules = AssetDatabase.LoadAssetAtPath<AARules>(AAConst.AARulesPath);
         }
         if (pathDir != null && !isForce) {
             return;
