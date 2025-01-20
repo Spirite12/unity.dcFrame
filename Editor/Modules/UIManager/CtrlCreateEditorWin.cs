@@ -14,7 +14,7 @@ public class CtrlCreateEditor : EditorWindow {
     public const string ConfigCtrlItemFileName = "CtrlItemClassTp.txt";
     public const string ConfigMonoItemFileName = "MonoItemClassTp.txt";
 
-	[MenuItem("Assets/Create/Ctrl Script", false, 82)]
+	[MenuItem("Assets/Create/Ctrl Script", false, 80)]
 	public static void CreateCtrlWin() {
 		selectedObject = Selection.activeObject as GameObject;
 
@@ -24,7 +24,7 @@ public class CtrlCreateEditor : EditorWindow {
 		RefreshWinInfo();
 	}
 
-    [MenuItem("Assets/Create/Ctrl Script", true, 82)]
+    [MenuItem("Assets/Create/Ctrl Script", true, 80)]
     public static bool CreateCtrlWinValidate() {
 		var theSelection = Selection.activeObject;
         var currentPath = AssetDatabase.GetAssetPath(theSelection);
