@@ -28,6 +28,7 @@ namespace DCFrame {
         /// </summary>
         public enum EnumPrefixPath {
             Single = 0,
+            Game = 1,
         }
         
         /// <summary>
@@ -35,12 +36,13 @@ namespace DCFrame {
         /// </summary>
         private static readonly Dictionary<EnumPrefixPath, string> PrefixPathDic = new() {
             { EnumPrefixPath.Single, "Assets/Simple/"},
+            { EnumPrefixPath.Game, "Assets/Game/Prefabs/"}
         };
         
         /// <summary>
         /// 获取贴图加载地址
         /// </summary>
-        public static string GetSpritePath(string path, EnumPrefixPath enumPrefix = EnumPrefixPath.Single) {
+        public static string GetSpritePath(string path, EnumPrefixPath enumPrefix = EnumPrefixPath.Game) {
             if (!PrefixPathDic.TryGetValue(enumPrefix, out string prefixPath)) {
                 ErrorPrefixPathTips(enumPrefix);
                 return "";
@@ -51,7 +53,7 @@ namespace DCFrame {
         /// <summary>
         /// 获取文本加载地址
         /// </summary>
-        public static string GetTxtPath(string path, EnumPrefixPath enumPrefix = EnumPrefixPath.Single) {
+        public static string GetTxtPath(string path, EnumPrefixPath enumPrefix = EnumPrefixPath.Game) {
             if (!PrefixPathDic.TryGetValue(enumPrefix, out string prefixPath)) {
                 ErrorPrefixPathTips(enumPrefix);
                 return "";
@@ -62,7 +64,7 @@ namespace DCFrame {
         /// <summary>
         /// 获取预制件加载地址
         /// </summary>
-        public static string GetPrefabPath(string path, EnumPrefixPath enumPrefix = EnumPrefixPath.Single) {
+        public static string GetPrefabPath(string path, EnumPrefixPath enumPrefix = EnumPrefixPath.Game) {
             if (!PrefixPathDic.TryGetValue(enumPrefix, out string prefixPath)) {
                 ErrorPrefixPathTips(enumPrefix);
                 return "";
