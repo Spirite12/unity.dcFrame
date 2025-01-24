@@ -1,9 +1,6 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
 
 namespace DCFrame {
-	[RequireComponent(typeof(Canvas))]
-	[RequireComponent(typeof(GraphicRaycaster))]
 	public class UIOrder : MonoBehaviour {
         /// <summary>
         /// 获取当前界面的层级值

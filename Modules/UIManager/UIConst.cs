@@ -1,6 +1,7 @@
 namespace DCFrame {
     public struct UIConst {
         public const string UIOrder = "DCFrame.UIOrder";
+        public const string UICreateId = "DCFrame.UICreateItem";
 
         public const string ResAssemblyName = "ADF.Game.Mono";
         public const string UIOrderAssemblyName = "ADF.DCFrame";
@@ -11,6 +12,6 @@ namespace DCFrame {
 
         public const string outPutMonoHeadPath = "Game\\Scripts\\Mono\\";
         public const string outPutCtrlHeadPath = "Game\\Scripts\\Script\\";
-        public const string outPutPrefabHeadPath = "Assets/Resources/";
+        public const string outPutPrefabHeadPath = "Assets/Game/Prefabs/";
     }
 }

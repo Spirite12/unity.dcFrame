@@ -166,7 +166,7 @@ public class UIMonoEditor : Editor {
         }
         
         // 处理 Item
-        var rectItemList = GetCurMonoRefList("UIMgr.UICreateItem");
+        var rectItemList = GetCurMonoRefList(UIConst.UICreateId);
         foreach (var item in rectItemList) {
             // 判断是否添加实例化变量
             var itemName = GetGoItemName(item);
@@ -242,7 +242,7 @@ public class UIMonoEditor : Editor {
         strRef += "\r\n\t\r\n\t";
         fileContent = fileContent.Replace(StrAutoRefStart, strRef);
         File.WriteAllText(path, fileContent);
-        AssetDatabase.Refresh();
+        AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
         EditorPrefs.SetString(EditorMonoRef, EditorMonoRef);
     }
 
@@ -263,7 +263,7 @@ public class UIMonoEditor : Editor {
             }
 
             // 处理 Item
-            var rectItemList = GetCurMonoRefList("UIMgr.UICreateItem");
+            var rectItemList = GetCurMonoRefList(UIConst.UICreateId);
             foreach (var strItem in rectItemList) {
                 // 处理 Release 函数
                 var strRelease = GetItemOnReleaseFormat(strItem);

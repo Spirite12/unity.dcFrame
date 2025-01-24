@@ -6,6 +6,7 @@ using UnityEngine;
 using System.Reflection;
 using DCFrame;
 using DCFrame.Utility;
+using UnityEngine.UI;
 
 public class CtrlCreateEditor : EditorWindow {
     public static string ConfigFilePath => Path.Combine(Environment.CurrentDirectory, @"Tools\ScriptTemplates\");
@@ -155,6 +156,7 @@ public class CtrlCreateEditor : EditorWindow {
 		string fileContent = File.ReadAllText(ConfigFilePath + strConfig);
 		fileContent = fileContent.Replace("#SCRIPTNAME#", selectedObject?.name);
         EditorPrefs.SetString(EditorCtrlCreate, selectedObject?.name);
+        EditorPrefs.SetBool(EditorIsPanel, isPanel);
         File.WriteAllText(filePath + ".cs", fileContent);
 	}
 
@@ -237,7 +239,9 @@ public class CtrlCreateEditor : EditorWindow {
 			return;
 		}
 		EditorPrefs.DeleteKey(EditorCtrlCreate);
-        
+		bool isPanelEditor = EditorPrefs.GetBool(EditorIsPanel);
+		EditorPrefs.DeleteKey(EditorIsPanel);
+		
 		if (selectedObject && monoName != selectedObject.name) {
 			return;
 		}
@@ -263,20 +267,29 @@ public class CtrlCreateEditor : EditorWindow {
             type = tmpAssembly.GetType(UIConst.UIOrder);
             if (origin.GetComponent(type) == null) {
                 origin.AddComponent(type);
+                if (isPanelEditor) {
+	                origin.AddComponent<Canvas>();
+	                origin.AddComponent<GraphicRaycaster>();
+                }
                 isSave = true;
             }
-
             if (isSave) {
                 PrefabUtility.SavePrefabAsset(origin);
                 AssetDatabase.Refresh();
             }
         }
-    }
+	}
+
 
 	/// <summary>
 	/// EditorPref 保存的 key ： 创建ctrl脚本，value是脚本名
 	/// </summary>
 	private static string EditorCtrlCreate = "EditorCtrlCreate";
+	/// <summary>
+	/// EditorPref 保存的 key : 是否是全屏
+	/// </summary>
+	private static string EditorIsPanel = "EditorIsPanel";
+	
     /// <summary>
 	/// 所选择的物体
 	/// </summary>

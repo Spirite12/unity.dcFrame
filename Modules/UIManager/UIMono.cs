@@ -32,7 +32,7 @@ namespace DCFrame {
             return IsShowTool();
         }
 
-        [ContextMenu("生成按钮函数", true)]
+        [ContextMenu("生成相关函数", true)]
         private bool InstanceBtnMethodsValidate() {
             return IsShowTool();
         }

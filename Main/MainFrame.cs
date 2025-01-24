@@ -68,13 +68,11 @@ namespace DCFrame {
 
 		private void AddListeners() {
 			Application.lowMemory += OnLowMemory;
-			UIMgr.Instance.OnCloseAllUI += GcCollect;
 			UIBase.OnUnLoadUI += GcCollect;
 		}
 
 		private void RemoveListener() {
 			Application.lowMemory -= OnLowMemory;
-			UIMgr.Instance.OnCloseAllUI -= GcCollect;
 			UIBase.OnUnLoadUI -= GcCollect;
 		}
 		

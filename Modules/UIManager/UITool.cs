@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 
 namespace DCFrame {
     public class UITool :Singleton<UITool> {
@@ -10,14 +11,13 @@ namespace DCFrame {
         /// <param name="openAction">打开回调</param>
         /// <param name="closeAction">关闭回调</param>
         /// <param name="strDicKey">排序key,无需求则默认不写</param>
-        /// <param name="sort">队列排序ID越大越后面出现</param>
-        public void ShowQueuePanel(UIBase uiBase, Action<Exception> openAction = null, Action closeAction = null, string strDicKey = "default") {
+        public void ShowQueuePanel(UIBase uiBase, Action openAction = null, Action closeAction = null, string strDicKey = "default") {
             if (!uiQueueDic.ContainsKey(strDicKey)) {
                 uiQueueDic.Add(strDicKey, new List<QueueClass>());
             }
             uiQueueDic[strDicKey].Add(new QueueClass(uiBase, openAction, closeAction));
             if (uiQueueDic[strDicKey].Count == 1) {
-                OpenFirstPanel(strDicKey);
+                _ = OpenFirstPanel(strDicKey);
             }
         }
 
@@ -29,29 +29,30 @@ namespace DCFrame {
             if (uiQueueDic[strDicKey].Count == 0) {
                 return;
             }
-            OpenFirstPanel(strDicKey);
+            _ = OpenFirstPanel(strDicKey);
         }
 
         /// <summary>
         /// 打开第一个队列
         /// </summary>
-        private void OpenFirstPanel(string strDicKey) {
+        private async UniTask OpenFirstPanel(string strDicKey) {
             var uiQueue = uiQueueDic[strDicKey][0];
-            uiQueue.uiBase.Open(uiQueue.openAction, () => {
+            await uiQueue.uiBase.Open(() => {
                 uiQueue.closeAction?.Invoke();
                 ShowQueueNextPanel(strDicKey);
             });
+            uiQueue.openAction?.Invoke();
         }
 
         /// <summary>
         /// 队列打开类
         /// </summary>
-        public class QueueClass {
+        private class QueueClass {
             public UIBase uiBase;
-            public Action<Exception> openAction;
+            public Action openAction;
             public Action closeAction;
 
-            public QueueClass(UIBase uiBase, Action<Exception> openAction, Action closeAction) {
+            public QueueClass(UIBase uiBase, Action openAction, Action closeAction) {
                 this.uiBase = uiBase;
                 this.openAction = openAction;
                 this.closeAction = closeAction;

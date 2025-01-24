@@ -2,7 +2,6 @@
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Object = UnityEngine.Object;
-using Path = System.IO.Path;
 
 namespace DCFrame {
 	/// <summary>
@@ -57,14 +56,10 @@ namespace DCFrame {
 		/// 显示当前界面
 		/// </summary>
 		/// <param name="closeCallback">关闭界面回调</param>
-		/// <param name="isCloseOpen">是否是关闭的时候打开，UiMgr调用</param>
-		public async UniTask Open(Action closeCallback = null, bool isCloseOpen = false) {
+		public async UniTask Open(Action closeCallback = null) {
 			if (isOpen) {
 				Debug.LogError("Already opened.");
 				return;
-			}
-			if (!isCloseOpen && UIMgr.Instance.IsInStack(this)) {
-				await UIMgr.Instance.CloseAboveUI(this);
 			}
 			isOpen = true;
 			await LoadPrefab();
@@ -245,11 +240,12 @@ namespace DCFrame {
 			if (IsLoaded()) {
 				return;
 			}
-			var address = Asset.GetPrefabPath(Path.Combine(AssetPath, AssetName));
+
+			var address = Asset.GetPrefabPath(AssetPath + "/" + AssetName);
 			var taskLoadPrefab = Asset.LoadAsset(address);
 			var taskOnLoading = OnLoading();
-			await UniTask.WhenAll(taskLoadPrefab, taskOnLoading.AsAsyncUnitUniTask());
-			var prefab = await taskLoadPrefab as GameObject;
+			var (prefabObj, _) = await UniTask.WhenAll(taskLoadPrefab, taskOnLoading.AsAsyncUnitUniTask());
+			var prefab = prefabObj as GameObject;
 			if (prefab == null) {
 				Debug.LogError($"load failed: assetPath = {AssetPath}, assetName = {AssetName}");
 				return;

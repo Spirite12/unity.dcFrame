@@ -39,7 +39,7 @@ namespace DCFrame {
         public void EscapeClose() {
             for (int i = uiStack.Count - 1; i > 0; i--) {
                 if (uiStack[i].IsOpen()) {
-                    uiStack[i].Close();
+                    _ = uiStack[i].Close();
                     break;
                 }
             }
@@ -83,7 +83,6 @@ namespace DCFrame {
 
 		/// <summary>
 		/// 获取最新打开界面的层级
-		/// 如果已经在UI栈里则返回当前的值，不能嵌套重复打开
 		/// </summary>
 		/// <returns></returns>
 		public int GetPanelOrder(UIBase uiBase) {
@@ -115,7 +114,6 @@ namespace DCFrame {
 
         /// <summary>
 		/// 在target界面前/后插入insert界面
-		/// 注意：界面开启关闭时序
 		/// </summary>
 		/// <param name="insert">插入界面</param>
 		/// <param name="target">目标界面</param>
@@ -135,7 +133,6 @@ namespace DCFrame {
 		/// <summary>
 		/// 从场景树中移除
 		/// </summary>
-		/// <param name="ui">需要移除的UI</param>
 		public void RemoveFromScene(UIBase ui) {
 			var transform = ui.GetUIGameObject().transform;
 			if (transform) {
@@ -147,7 +144,6 @@ namespace DCFrame {
         /// <summary>
 		/// 添加UI到场景
 		/// </summary>
-		/// <param name="ui">需要添加的UI</param>
 		public void AddToScene(UIBase ui) {
 			ui.IsInScene = true;
 			var uiTransform = ui.GetUIGameObject().transform;
@@ -184,7 +180,7 @@ namespace DCFrame {
 					break;
                 }
                 if (uiStack[i].IsOpen() && uiStack[i].IsDefaultUIBaseType()) {
-                    uiStack[i].Close(false);
+                    _ = uiStack[i].Close(false);
                 }
                 if (uiStack[i].IsDefaultUIBaseType()) {
                     uiStack.RemoveAt(i);
@@ -232,7 +228,7 @@ namespace DCFrame {
                 if(uiStack[i].IsOpen() && isFullScene) {
                     break;
 				}
-				var task = uiStack[i].Open(null,true);
+				var task = uiStack[i].Open();
 				taskList.Add(task);
 				if(isFullScene) {
 					break;
@@ -256,7 +252,7 @@ namespace DCFrame {
 				if (!uiStack[i].IsOpen()) {
 					continue;
 				}
-                uiStack[i].Close(false, false);
+				_ = uiStack[i].Close(false, false);
 			}
 		}
 
@@ -271,13 +267,13 @@ namespace DCFrame {
             // UIBase.Close接口会删除uiList数组元素，所以引用临时数据
             for (var i = tmpUIs.Count - 1; i >= 0; --i) {
 	            if (tmpUIs[i].IsOpen()) {
-		            tmpUIs[i].Close(false);
+		            _ = tmpUIs[i].Close(false);
 	            }
             }
             uiStack.Clear();
         }
 
-    #endregion
+		#endregion
 
         private readonly List<UIBase> uiStack = new List<UIBase>();
     }
