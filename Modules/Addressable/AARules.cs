@@ -24,7 +24,7 @@ namespace DCFrame {
         public class HierarchySingleDir {
             [Range(1, 5)]
             public int number = 1;
-            public string searchPattern = "*.*";
+            public string searchPattern = SearchPattern;
             public SearchOption option = SearchOption.TopDirectoryOnly;
         }
     
@@ -43,5 +43,7 @@ namespace DCFrame {
             [Header("过滤的文件夹")]
             public List<Object> excludePathList = new List<Object>();
         }
+        
+        public const string SearchPattern = "*.*";
     }
 }

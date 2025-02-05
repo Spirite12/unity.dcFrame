@@ -96,6 +96,9 @@ public class AddressableEditor : Editor {
                 List<string> pathList = new List<string>();
                 FileUtil.TraverseDirectories(path, 1, item.directory.number, pathList);
                 foreach (var pathTp in pathList) {
+                    if (item.directory.searchPattern == "") {
+                        item.directory.searchPattern = AARules.SearchPattern;
+                    }
                     string[] subDirectories = Directory.GetFiles(pathTp, item.directory.searchPattern, item.directory.option);
                     foreach (var subPath in subDirectories) {
                         if (subPath.EndsWith(".meta")) {
@@ -147,6 +150,9 @@ public class AddressableEditor : Editor {
                     List<string> pathList = new List<string>();
                     FileUtil.TraverseDirectories(path, 1, data.directory.number, pathList);
                     foreach (var pathTp in pathList) {
+                        if (data.directory.searchPattern == "") {
+                            data.directory.searchPattern = AARules.SearchPattern;
+                        }
                         string[] subDirectories = Directory.GetFiles(pathTp, data.directory.searchPattern, data.directory.option);
                         foreach (var subPath in subDirectories) {
                             if (subPath.EndsWith(".meta")) {
