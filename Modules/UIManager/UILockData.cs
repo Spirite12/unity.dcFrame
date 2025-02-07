@@ -95,7 +95,6 @@ namespace DCFrame {
         /// <summary>
         /// 获取是否开启上锁信息
         /// </summary>
-        /// <param name="goName"></param>
         public static bool GetIsOpen() {
             return ReqPath.Length > 0 && ReqGetPath.Length > 0;
         }
