@@ -5,16 +5,14 @@ using UnityEngine.UI;
 namespace DCFrame {
     [DisallowMultipleComponent]
     public class UIAdaptive : MonoBehaviour {
-        public AdaptiveMode mode = AdaptiveMode.MiddleOffset;
+        public AdaptiveMode mode = AdaptiveMode.Middle;
         public enum AdaptiveMode {
-            MiddleOffset = 1,
-            TopSizeDelta = 2,
-            BottomSizeDelta = 3,
-            OutTopRect = 4,
-            OutBottomRect = 5,
-            NoTopOffset = 6,
-            NoBottomOffset = 7,
-            Camera = 8,
+            Middle = 1,
+            Top = 2,
+            Bottom = 3,
+            OutTop = 4,
+            OutBottom = 5,
+            Camera = 6,
         }
 
         public void OnClickTakeEffect() {
@@ -34,6 +32,7 @@ namespace DCFrame {
         /// </summary>
         private void InitSafeAreaData() {
             rect = GetComponent<RectTransform>();
+            vec2Origin = rect.anchoredPosition;
 #if UNITY_EDITOR
             topHeight = vecEditorSafeArea.x;
             bottomHeight = vecEditorSafeArea.y;
@@ -52,41 +51,31 @@ namespace DCFrame {
         private void SetSafeAreaPos() {
             switch (mode) {
                 // 中间适配
-                case AdaptiveMode.MiddleOffset:
+                case AdaptiveMode.Middle:
                     rect.offsetMin = new Vector2(0, bottomHeight);
                     rect.offsetMax = new Vector2(0, -topHeight);
                     break;
-
-                // 顶部适配
-                case AdaptiveMode.TopSizeDelta:
-                    rect.sizeDelta = new Vector2(rect.sizeDelta.x, topHeight);
-                    break;
-
-                // 底部适配
-                case AdaptiveMode.BottomSizeDelta:
-                    rect.sizeDelta = new Vector2(rect.sizeDelta.x, bottomHeight);
-                    break;
-
-                // 超出顶部高度适配
-                case AdaptiveMode.OutTopRect:
-                    SetModeOutTop();
-                    break;
-
-                // 超出底部高度适配
-                case AdaptiveMode.OutBottomRect:
-                    SetModeOutBottom();
-                    break;
-
-                // 只有头部缺少适配
-                case AdaptiveMode.NoTopOffset:
+                
+                // 头部适配
+                case AdaptiveMode.Top:
                     rect.offsetMin = new Vector2(0, 0);
                     rect.offsetMax = new Vector2(0, -topHeight);
                     break;
 
-                // 只有底部缺少适配
-                case AdaptiveMode.NoBottomOffset:
+                // 底部适配
+                case AdaptiveMode.Bottom:
                     rect.offsetMin = new Vector2(0, bottomHeight);
                     rect.offsetMax = new Vector2(0, 0);
+                    break;
+
+                // 超出顶部适配
+                case AdaptiveMode.OutTop:
+                    SetModeOutTop();
+                    break;
+
+                // 超出底部适配
+                case AdaptiveMode.OutBottom:
+                    SetModeOutBottom();
                     break;
 
                 // 修改镜头模式
@@ -105,8 +94,10 @@ namespace DCFrame {
                 rect.offsetMin = new Vector2(0, 0);
                 rect.offsetMax = new Vector2(0, topHeight);
             } else {
-                rect.anchoredPosition = new Vector2(rect.anchoredPosition.x, rect.anchoredPosition.y + topHeight);
-                rect.sizeDelta = new Vector2(rect.sizeDelta.x, rect.sizeDelta.y + topHeight);
+                rect.anchoredPosition = new Vector2(vec2Origin.x, vec2Origin.y + topHeight);
+                var sizeDelta = rect.sizeDelta;
+                sizeDelta = new Vector2(sizeDelta.x, sizeDelta.y + topHeight);
+                rect.sizeDelta = sizeDelta;
             }
         }
 
@@ -119,8 +110,10 @@ namespace DCFrame {
                 rect.offsetMin = new Vector2(0, -bottomHeight);
                 rect.offsetMax = new Vector2(0, 0);
             } else {
-                rect.anchoredPosition = new Vector2(rect.anchoredPosition.x, rect.anchoredPosition.y + -topHeight);
-                rect.sizeDelta = new Vector2(rect.sizeDelta.x, rect.sizeDelta.y + topHeight);
+                rect.anchoredPosition = new Vector2(vec2Origin.x, vec2Origin.y + -topHeight);
+                var sizeDelta = rect.sizeDelta;
+                sizeDelta = new Vector2(sizeDelta.x, sizeDelta.y + topHeight);
+                rect.sizeDelta = sizeDelta;
             }
         }
 
@@ -129,18 +122,18 @@ namespace DCFrame {
         /// </summary>
         private void SetModeCamera() {
             Canvas canvas = GetComponent<Canvas>();
-            CanvasScaler scaler = GetComponent<CanvasScaler>();
             if (canvas != null) {
                 Camera wc = canvas.worldCamera;
                 wc.rect = new Rect(0, bottomHeight / ScreenHeight, 1, centerHeight / ScreenHeight);
             }
-
+            CanvasScaler scaler = GetComponent<CanvasScaler>();
             if (scaler != null) {
                 Vector2 sr = scaler.referenceResolution;
                 scaler.referenceResolution = new Vector2(sr.x, sr.y / centerHeight * ScreenHeight);
             }
         }
 
+        private Vector2 vec2Origin;
         private RectTransform rect;
         private float topHeight = 0;
         private float centerHeight = 0;
