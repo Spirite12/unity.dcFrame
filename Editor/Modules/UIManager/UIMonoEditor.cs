@@ -225,7 +225,8 @@ public class UIMonoEditor : Editor {
         if (path == string.Empty) {
             return;
         }
-        string fileContent = File.ReadAllText(path);
+        string fileOrigin = File.ReadAllText(path);
+        string fileContent = fileOrigin;
         if (fileContent.Contains(StrAutoRefStart)) {
             fileContent = StringUtil.StringMidException(fileContent, StrAutoRefStart, StrAutoRefEnd, false);
         } else {
@@ -241,9 +242,11 @@ public class UIMonoEditor : Editor {
         }
         strRef += "\r\n\t\r\n\t";
         fileContent = fileContent.Replace(StrAutoRefStart, strRef);
-        File.WriteAllText(path, fileContent);
-        AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
-        EditorPrefs.SetString(EditorMonoRef, EditorMonoRef);
+        if (fileContent != fileOrigin) {
+            File.WriteAllText(path, fileContent);
+            AssetDatabase.Refresh();
+            EditorPrefs.SetString(EditorMonoRef, EditorMonoRef);
+        }
     }
 
     /// <summary>
