@@ -32,25 +32,29 @@ public class UIMonoEditor : Editor {
         UIMono.onClickBtnMethods = null;
     }
 
-    public void Update() {
-        if (webReq == null && updateAddCount % frameCount == 0 && TimeUtil.GetCurTimestamp() - curLockTime >= refreshTime) {
-            webReq = UILockData.Instance.GetReqNetPath(Selection.activeGameObject.name);
-        }
-        if (webReq != null && (!string.IsNullOrEmpty(webReq.error) || webReq.isDone)) {
-            try {
-                UILockData.Instance.AnalysisWebInfo(webReq.downloadHandler.text);
-                webReq.Dispose();
-                webReq = null;
-            } catch (Exception) {
-                Debug.Log("同步预制件信息出错，可能你开启了全局翻墙或不能连接到内网！");
+    private void Update() {
+        if (UILockData.GetIsOpen()) {
+            if (webReq == null && updateAddCount % frameCount == 0 && TimeUtil.GetCurTimestamp() - curLockTime >= refreshTime) {
+                webReq = UILockData.Instance.GetReqNetPath(Selection.activeGameObject.name);
             }
+            if (webReq != null && (!string.IsNullOrEmpty(webReq.error) || webReq.isDone)) {
+                try {
+                    UILockData.Instance.AnalysisWebInfo(webReq.downloadHandler.text);
+                    webReq.Dispose();
+                    webReq = null;
+                } catch (Exception) {
+                    Debug.Log("同步预制件信息出错，可能你开启了全局翻墙或不能连接到内网！");
+                }
+            }
+            updateAddCount += 1;
         }
-        updateAddCount += 1;
     }
 
     public override void OnInspectorGUI() {
-        LockName();
-        LockBtnInfo();
+        if (UILockData.GetIsOpen()) {
+            LockName();
+            LockBtnInfo();
+        }
         AutoRefMatchGo();
         base.OnInspectorGUI();
     }

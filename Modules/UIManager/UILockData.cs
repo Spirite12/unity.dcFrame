@@ -62,7 +62,7 @@ namespace DCFrame {
         /// 获取请求地址
         /// </summary>
         public UnityWebRequest GetReqNetPath(string goName) {
-            var web = UnityWebRequest.Get(reqGetPath + goName);
+            var web = UnityWebRequest.Get(ReqGetPath + goName);
             //web.SendWebRequest();
             return web;
         }
@@ -71,7 +71,7 @@ namespace DCFrame {
         /// 向服务端设置上锁信息
         /// </summary>
         public void SetNetLockInfo(string goName, LockData lockData) {
-            string strReq = reqPath + goName + "/";
+            string strReq = ReqPath + goName + "/";
             if (lockData != null) {
                 strReq += lockData.lockName + "-" + lockData.lockTime;
             }
@@ -91,6 +91,14 @@ namespace DCFrame {
             lockPrefabDic[key].lockName = strValueList[0];
             lockPrefabDic[key].lockTime = long.Parse(strValueList[1]);
         }
+        
+        /// <summary>
+        /// 获取是否开启上锁信息
+        /// </summary>
+        /// <param name="goName"></param>
+        public static bool GetIsOpen() {
+            return ReqPath.Length > 0 && ReqGetPath.Length > 0;
+        }
 
         /// <summary>
         /// key:预制体名，value：上锁信息
@@ -101,12 +109,12 @@ namespace DCFrame {
         /// <summary>
         /// 请求的地址
         /// </summary>
-        private const string reqPath = "xxxxx/";
+        private const string ReqPath = "";
 
         /// <summary>
         /// 获取的地址
         /// </summary>
-        private const string reqGetPath = "xxxxx/";
+        private const string ReqGetPath = "";
 
         public class LockData {
             public string lockName;
