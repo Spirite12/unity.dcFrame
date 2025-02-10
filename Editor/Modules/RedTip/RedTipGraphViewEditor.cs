@@ -23,7 +23,7 @@ public class RedTipGraphViewEditor : EditorWindow {
         minMap = new MiniMap();
         graphView.Add(minMap);
         // 加载资源
-        var assetVisual = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/DCFrame/Editor/RedTip/RedTipTemplate.uxml");
+        var assetVisual = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/DCFrame/Editor/Modules/RedTip/RedTipTemplate.uxml");
         // 创建新的子节点
         visualElement = assetVisual.CloneTree();
         // 向当前窗口添加图形视图
