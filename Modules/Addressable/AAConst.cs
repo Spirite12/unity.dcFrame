@@ -16,6 +16,10 @@ namespace DCFrame {
         /// AA 标签打组
         /// </summary>
         public const string AAGroupLabel = "AAGroupLabel";
+        /// <summary>
+        /// AA 默认组
+        /// </summary>
+        public const string AADefaultLocalGroup = "Default Local Group";
     }
 }
 

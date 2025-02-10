@@ -33,6 +33,7 @@ public class AddressableEditor : Editor {
         DealWithGroupLabel(groupLabel, progressList[1], progressList[2]);
         var groupFolder = InitGroupData(AAConst.AAGroupFolder);
         DealWithGroupFolder(groupFolder, progressList[2], progressList[3]);
+        InitGroupData(AAConst.AADefaultLocalGroup);
         AssetDatabase.SaveAssets();
         EditorUtility.ClearProgressBar();
         AddressableAssetSettings.BuildPlayerContent();
