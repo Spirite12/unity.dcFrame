@@ -1,0 +1,19 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:GroupBox style="flex-direction: row;">
+        <ui:VisualElement name="TextFieldArea" style="flex-direction: row;">
+            <ui:TextField picking-mode="Ignore" text="跳转输入的红点名称" is-delayed="false" name="TxtField" style="width: 126px;" />
+            <ui:TextField picking-mode="Ignore" text="红点Id默认0" is-delayed="false" name="TxtFieldId" value="0" style="width: 74px;" />
+            <ui:Button text="确认" display-tooltip-when-elided="true" name="BtnJump" />
+        </ui:VisualElement>
+        <ui:GroupBox style="margin-left: 12px;" />
+        <ui:VisualElement name="TogActiveArea" style="flex-direction: row;">
+            <ui:Label text="只显示激活状态：" display-tooltip-when-elided="true" style="-unity-text-align: middle-left;" />
+            <ui:Toggle name="TogActive" style="align-items: flex-end; flex-direction: row;" />
+        </ui:VisualElement>
+        <ui:GroupBox style="margin-left: 12px;" />
+        <ui:VisualElement name="TogOpenArea" style="flex-direction: row;">
+            <ui:Label text="只显示开放状态：" display-tooltip-when-elided="true" style="-unity-text-align: middle-left;" />
+            <ui:Toggle name="TogOpen" style="flex-direction: row; align-items: flex-end;" />
+        </ui:VisualElement>
+    </ui:GroupBox>
+</ui:UXML>
