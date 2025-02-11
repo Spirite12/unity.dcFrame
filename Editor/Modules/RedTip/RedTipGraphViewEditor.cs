@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 public class RedTipGraphViewEditor : EditorWindow {
-    [MenuItem("Tools/RedTipTool")]
+    [MenuItem("Tools/编辑器项/RedTipTool")]
     public static void Open() {
         if (!Application.isPlaying) {
             EditorUtility.DisplayDialog("Error info", "请在游戏运行后打开此工具", "关闭");
