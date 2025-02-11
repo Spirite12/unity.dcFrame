@@ -1,35 +1,42 @@
 using System;
 using UnityEditor;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 public class RedTipUIToolkit {
 
     /// <summary>
-    /// ¿ª·Å×´Ì¬±ä»¯
+    /// å¼€æ”¾çŠ¶æ€å˜åŒ–
     /// </summary>
     public static event Action<bool> OnEventModifyOpen;
     /// <summary>
-    /// ¼¤»î×´Ì¬±ä»¯
+    /// æ¿€æ´»çŠ¶æ€å˜åŒ–
     /// </summary>
     public static event Action<bool> OnEventModifyActive;
     /// <summary>
-    /// µã»÷ËÑË÷ÎÄ±¾
+    /// ç‚¹å‡»æœç´¢æ–‡æœ¬
     /// </summary>
     public static event Action<string, int> OnEventSearchText;
 
     /// <summary>
-    /// äÖÈ¾´°¿Ú
+    /// æ¸²æŸ“çª—å£
     /// </summary>
     public static void RenderEditorWindows(VisualElement visualElementParam) {
         visualElement = visualElementParam;
 
         Toggle togOpen = visualElement.Q<Toggle>("TogOpen");
         togOpen.RegisterCallback<ChangeEvent<bool>>((eventParam) => {
+            if (!IsPlaying()) {
+                return;
+            }
             OnEventModifyOpen?.Invoke(eventParam.newValue);
         });
 
         Toggle togActive = visualElement.Q<Toggle>("TogActive");
         togActive.RegisterCallback<ChangeEvent<bool>>((eventParam) => {
+            if (!IsPlaying()) {
+                return;
+            }
             OnEventModifyActive?.Invoke(eventParam.newValue);
         });
 
@@ -38,16 +45,25 @@ public class RedTipUIToolkit {
 
         Button btnRedTip = visualElement.Q<Button>("BtnJump");
         btnRedTip.clickable = new Clickable(() => {
+            if (!IsPlaying()) {
+                return;
+            }
             if (txtField.value.Length <= 0) {
-                EditorUtility.DisplayDialog("Error info", "ÇëÊäÈëºìµãÃû³Æ", "¹Ø±Õ");
+                EditorUtility.DisplayDialog("Error info", "è¯·è¾“å…¥çº¢ç‚¹åç§°", "å…³é—­");
                 return;
             }
             if (int.TryParse(txtFieldId.value, out int num)) {
                 OnEventSearchText?.Invoke(txtField.value, int.Parse(txtFieldId.value));
             } else {
-                EditorUtility.DisplayDialog("Error info", "ÇëÔÚºìµãIDÊäÈë¿òÄÚÊäÈëÊı×Ö", "¹Ø±Õ");
+                EditorUtility.DisplayDialog("Error info", "è¯·åœ¨çº¢ç‚¹IDè¾“å…¥æ¡†å†…è¾“å…¥æ•°å­—", "å…³é—­");
             }
         });
+    }
+
+    private static bool IsPlaying() {
+        if (Application.isPlaying) return true;
+        EditorUtility.DisplayDialog("Error info", "è¯·åœ¨æ¸¸æˆè¿è¡Œåä½¿ç”¨æ­¤å·¥å…·", "å…³é—­");
+        return false;
     }
 
 
