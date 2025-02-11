@@ -51,6 +51,7 @@ namespace DCFrame {
 			OnApplicationQuitEvent?.Invoke();
 			RemoveListener();
 			UIMgr.Instance.Shut();
+			EventMgr.Clear();
 		}
 
 		/// <summary>
