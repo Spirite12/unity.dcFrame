@@ -32,7 +32,7 @@ public class ResUtilEditor : Editor {
     /// <summary>   
     /// 创建空Txt文件，防止 Unity 空文件夹存在，但又需要
     /// </summary>
-    [MenuItem("Assets/Create/Tools/空文件夹占位", false, 80)]
+    [MenuItem("Assets/Tools/工具项/空文件夹占位", false)]
     public static void CreatePlaceholderTxt() {
         string path = AssetDatabase.GetAssetPath(Selection.activeObject);
         string filePath = Path.Combine(path, "Placeholder.txt");
@@ -40,7 +40,7 @@ public class ResUtilEditor : Editor {
         AssetDatabase.Refresh();
     }
     
-    [MenuItem("Assets/Create/Tools/空文件夹占位", true, 80)]
+    [MenuItem("Assets/Tools/工具项/空文件夹占位", true)]
     public static bool CreatePlaceholderTxtTrue() {
         var theSelection = Selection.activeObject;
         var currentPath = AssetDatabase.GetAssetPath(theSelection);
@@ -57,7 +57,7 @@ public class ResUtilEditor : Editor {
 
     #region 创建 ScriptableObject
 
-    [MenuItem("Assets/Create/Tools/创建 ScriptableObject", false, 80)]
+    [MenuItem("Assets/Tools/工具项/创建 ScriptableObject", false)]
     public static void CreateScriptableObject() {
         var className = Selection.activeObject.name;
         Type type = FindTypeInAssemblies(className);
@@ -75,7 +75,7 @@ public class ResUtilEditor : Editor {
         }
     }
 
-    [MenuItem("Assets/Create/Tools/创建 ScriptableObject", true, 80)]
+    [MenuItem("Assets/Tools/工具项/创建 ScriptableObject", true)]
     public static bool CreateScriptableObjectTrue() {
         var theSelection = Selection.activeObject;
         var currentPath = AssetDatabase.GetAssetPath(theSelection);
