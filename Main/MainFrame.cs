@@ -16,25 +16,10 @@ namespace DCFrame {
 		public Transform tsfDeActiveRoot; // 不激活根节点
 		public Camera uiCamera; // UI摄像机
 
-		/// <summary>
-		/// 回收接口
-		/// </summary>
-		public void GcCollect() {
-			if (!unhandledLowMemoryWarning || Time.time - lastCollectTime < CollectDuration) {
-				return;
-			}
-
-			Resources.UnloadUnusedAssets();
-			GC.Collect();
-			lastCollectTime = Time.time;
-			unhandledLowMemoryWarning = false;
-		}
-
 		private void Awake() {
-			lastCollectTime = Time.time;
-			AddListeners();
-			UIMgr.Instance.Init(tsfActiveRoot, tsfDeActiveRoot, uiCamera);
+			GCCollect.Init();
 			TextFilter.InitFilterFile();
+			UIMgr.Instance.Init(tsfActiveRoot, tsfDeActiveRoot, uiCamera);
 			CacheMgr.Init();
 		}
 
@@ -52,65 +37,24 @@ namespace DCFrame {
 		/// 退出游戏回调函数
 		/// </summary>
 		private void OnApplicationQuit() {
-			unhandledLowMemoryWarning = false;
 			isPaused = false;
 			OnApplicationQuitEvent?.Invoke();
-			RemoveListener();
+			GCCollect.Destroy();
 			UIMgr.Instance.Shut();
 			EventMgr.Clear();
-			CacheMgr.SaveAllCacheBase();
-			CacheMgr.ClearAllCacheBase();
+			CacheMgr.Destroy();
 		}
 
 		/// <summary>
 		/// 前后台切换回调函数
 		/// </summary>
-		/// <param name="pauseStatus"></param>
 		private void OnApplicationFocus(bool pauseStatus) {
 			if (isPaused == pauseStatus) {
 				return;
 			}
-
 			isPaused = pauseStatus;
 			OnApplicationPause?.Invoke(isPaused);
 		}
-
-		private void AddListeners() {
-			Application.lowMemory += OnLowMemory;
-			UIBase.OnUnLoadUI += GcCollect;
-		}
-
-		private void RemoveListener() {
-			Application.lowMemory -= OnLowMemory;
-			UIBase.OnUnLoadUI -= GcCollect;
-		}
-		
-		/// <summary>
-		/// 接收到了低内存的事件
-		/// </summary>
-		private void OnLowMemory() {
-			unhandledLowMemoryWarning = true;
-			GcCollect();
-		}
-
-		private void GcCollect(UIBase uiBase) {
-			GcCollect();
-		}
-
-		/// <summary>
-		/// 回收周期，单位秒
-		/// </summary>
-		private const float CollectDuration = 10f;
-
-		/// <summary>
-		/// 是否有未处理的低内存警告
-		/// </summary>
-		private bool unhandledLowMemoryWarning = false;
-
-		/// <summary>
-		/// 上一次回收时刻
-		/// </summary>
-		private float lastCollectTime = 0;
 
 		/// <summary>
 		/// 是否暂停中

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Collections.Generic;
 
 namespace DCFrame {
     public abstract class CacheMgr {
@@ -38,6 +37,14 @@ namespace DCFrame {
             funcPlayer = _funcPlayer;
             funcServer = _funcServer;
             funcAccount = _funcAccount;
+        }
+
+        /// <summary>
+        /// 销毁
+        /// </summary>
+        public static void Destroy() {
+            SaveAllCacheBase();
+            ClearAllCacheBase();
         }
 
         /// <summary>
