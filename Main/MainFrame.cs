@@ -34,12 +34,18 @@ namespace DCFrame {
 			lastCollectTime = Time.time;
 			AddListeners();
 			UIMgr.Instance.Init(tsfActiveRoot, tsfDeActiveRoot, uiCamera);
+			TextFilter.InitFilterFile();
+			CacheMgr.Init();
 		}
 
 		private void Update() {
 			if (Input.GetKeyDown(KeyCode.Escape)) {
 				UIMgr.Instance.EscapeClose();
 			}
+		}
+		
+		private void FixedUpdate() {
+			CacheMgr.FixedUpdate();
 		}
 
 		/// <summary>
@@ -52,6 +58,8 @@ namespace DCFrame {
 			RemoveListener();
 			UIMgr.Instance.Shut();
 			EventMgr.Clear();
+			CacheMgr.SaveAllCacheBase();
+			CacheMgr.ClearAllCacheBase();
 		}
 
 		/// <summary>
