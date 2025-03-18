@@ -29,6 +29,7 @@ namespace DCFrame {
         public enum EnumPrefixPath {
             Single = 0,
             Game = 1,
+            Settings = 2
         }
         
         /// <summary>
@@ -36,7 +37,8 @@ namespace DCFrame {
         /// </summary>
         private static readonly Dictionary<EnumPrefixPath, string> PrefixPathDic = new() {
             { EnumPrefixPath.Single, "Assets/Simple/"},
-            { EnumPrefixPath.Game, "Assets/Game/Prefabs/"}
+            { EnumPrefixPath.Game, "Assets/Game/Prefabs/"},
+            { EnumPrefixPath.Settings, "Assets/Game/Settings/"},
         };
         
         /// <summary>
