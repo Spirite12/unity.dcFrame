@@ -10,7 +10,7 @@ using Debug = UnityEngine.Debug;
 using FileUtil = DCFrame.Utility.FileUtil;
 
 public class AnimationOpEditor : EditorWindow {
-    [MenuItem("Assets/Tools/优化项/Animation 优化", false)]
+    [MenuItem("Assets/工具箱/优化项/Animation 优化", false)]
     public static void WinProject() {
         Rect rect = new Rect(0, 0, 400, 200);
         AnimationOpEditor window = (AnimationOpEditor)EditorWindow.GetWindowWithRect(typeof(AnimationOpEditor), rect, true, "Animation Optimize");
@@ -18,7 +18,7 @@ public class AnimationOpEditor : EditorWindow {
         window.Show();
     }
 
-    [MenuItem("Assets/Tools/优化项/Animation 优化", true)]
+    [MenuItem("Assets/工具箱/优化项/Animation 优化", true)]
     public static bool WinProjectValidate() {
         selectObject = Selection.activeObject;
         currentPath = AssetDatabase.GetAssetPath(selectObject);
