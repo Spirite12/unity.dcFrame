@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -5,12 +6,14 @@ using System.Text;
 using CsvHelper;
 using CsvHelper.Configuration;
 using DCFrame;
+using DCFrame.Utility;
 using UnityEditor;
 using UnityEngine;
 
 public class TableEditor : Editor {
     [MenuItem("Tools/资源项/导表")]
     public static void PackageConfig() {
+        tableRules = AssetDatabase.LoadAssetAtPath<TableRules>(Asset.GetAssetPath("Table/TableRules", Asset.EnumPrefixPath.Settings));
         AnalyzeTableData();
         AssetDatabase.Refresh();
     }
@@ -56,13 +59,220 @@ public class TableEditor : Editor {
     /// </summary>
     private static void CreateTableScript(string fileName, Dictionary<string, string> tableDataDic) {
         string path = Asset.GetTxtPath(TableClassFileName, Asset.EnumPrefixPath.ScriptTemplates);
-        string fileContent = File.ReadAllText(path);
+        tableRule = tableRules.tableRuleList.Find((x) => x.name == fileName);
+        fileContent = File.ReadAllText(path);
         fileContent = fileContent.Replace("#SCRIPTNAME#", fileName);
+        fileContent = fileContent.Replace("#SCRIPTFIELD#", WriteTableClassField(tableDataDic));
+        DealWithConfigDic();
+        var filePath = TableScriptPath + "\\Table" + fileName + ".cs";
+        File.WriteAllText(filePath, fileContent);
+    }
+
+    #region 写入表数据
+
+    /// <summary>
+    /// 处理表的类字段
+    /// </summary>
+    /// <returns></returns>
+    private static string WriteTableClassField(Dictionary<string, string> tableDataDic) {
         string fieldContent = "";
-        fileContent = fileContent.Replace("#SCRIPTFIELD#", fieldContent);
-        File.WriteAllText(TableScriptPath + "\\Table" + fileName + ".cs", fileContent);
+        if (tableRule != null) {
+            var existList = new List<TableRules.TableField>();
+            foreach (var field in tableRule.fieldList) {
+                if (tableDataDic.ContainsKey(field.fieldName)) {
+                    existList.Add(field);
+                }
+            }
+            int addCount = 0;
+            foreach (var field in existList) {
+                var fileType = field.enumField.ToString().ToLower();
+                string strField = string.Format($"public {fileType} {field.fieldName} {{{{ get; set; }}}}");
+                fieldContent += strField;
+                addCount += 1;
+                if (addCount < existList.Count) {
+                    fieldContent += "\r\n\t\t";
+                }
+            }
+        }
+        return fieldContent;
+    }
+
+    /// <summary>
+    /// 处理字典数据
+    /// </summary>
+    private static void DealWithConfigDic(){
+        if (tableRule == null) {
+            return;
+        }
+        switch (tableRule.enumViceKey) {
+            case TableConst.EnumViceKey.None:
+                DealWithConfigDicNone();
+                break;
+            case TableConst.EnumViceKey.Vice:
+                DealWithConfigDicVice();
+                break;
+            case TableConst.EnumViceKey.ViceWithList:
+                DealWithConfigDicViceList();
+                break;
+        }
+    }
+
+    // 处理 主Key
+    private static void DealWithConfigDicNone() {
+        var mainKeyFieldType = tableRule.fieldList.Find((x)=> x.fieldName == tableRule.mainKey).enumField;
+        var key = mainKeyFieldType.ToString().ToLower();
+        var fieldName = tableRule.mainKey.ToLower();
+        var value = "Table" + tableRule.name + "Class";
+        // 字段
+        string configDic = ConfigDicTp;
+        configDic = configDic.Replace("#KEY#", key);
+        configDic = configDic.Replace("#VALUE#", value);
+        configDic = configDic.Replace("#NUM#", "");
+        fileContent = fileContent.Replace("#CONFIGDIC#", configDic);
+        // 初始化
+        string configInit = ConfigInitDic;
+        configInit = configInit.Replace("#KEY#", key);
+        configInit = configInit.Replace("#VALUE#", value);
+        configInit = configInit.Replace("#MATCH#", "x." + tableRule.mainKey);
+        fileContent = fileContent.Replace("#CONFIGDICINIT#", configInit);
+        // 函数
+        string configMethodKey = ConfigMethodsKey;
+        configMethodKey = configMethodKey.Replace("#RETURN#", value);
+        configMethodKey = configMethodKey.Replace("#NUM#", "");
+        configMethodKey = configMethodKey.Replace("#KEY#", fieldName);
+        configMethodKey = configMethodKey.Replace("#PARAM#", key + " " + fieldName);
+        configMethodKey = configMethodKey.Replace("#ERRER#", fieldName + "：{" + fieldName + "}");
+        fileContent = fileContent.Replace("#CONFIGMETHODSKEY#", configMethodKey);
+    }
+
+    // 处理 主副Key
+    private static void DealWithConfigDicVice() {
+        List<TableRules.TableField> fieldList = new List<TableRules.TableField>();
+        fieldList.Add(tableRule.fieldList.Find((x) => x.fieldName == tableRule.mainKey));
+        var fields = tableRule.fieldList.FindAll((x) => x.viceKeyValue > 0);
+        fields.Sort((x, y)=>x.viceKeyValue > y.viceKeyValue ? 1 : -1);
+        for (int i = 0; i < fields.Count; i++) {
+            fieldList.Add(fields[i]);
+        }
+        var strKey = "";
+        var strFieldName = "";
+        var strMatch = "";
+        var strParam = "";
+        var strError = "";
+        var addCount = 0;
+        foreach (var field in fieldList) {
+            var fileName = StringUtil.ToLowerFirstChar(field.fieldName);
+            var enumField = field.enumField.ToString().ToLower();
+            strFieldName += fileName;
+            strKey += enumField;
+            strMatch += "x." + field.fieldName;
+            strParam += enumField + " " + fileName;
+            strError += field.fieldName + "：{" + fileName + "}";
+            addCount += 1;
+            if (addCount < fieldList.Count) {
+                strKey += ", ";
+                strMatch += ", ";
+                strFieldName += ", ";
+                strParam += ", ";
+                strError += ", ";
+            }
+        }
+        var key = String.Format($"({strKey})");
+        var value = "Table" + tableRule.name + "Class";
+        // 字段
+        var configDic = ConfigDicTp;
+        configDic = configDic.Replace("#KEY#", key);
+        configDic = configDic.Replace("#VALUE#", value);
+        configDic = configDic.Replace("#NUM#", "");
+        fileContent = fileContent.Replace("#CONFIGDIC#", configDic);
+        // 初始化 
+        var configInit = ConfigInitDic;
+        configInit = configInit.Replace("#KEY#", key);
+        configInit = configInit.Replace("#VALUE#", value);
+        configInit = configInit.Replace("#MATCH#", strMatch);
+        fileContent = fileContent.Replace("#CONFIGDICINIT#", configInit);
+        // 函数
+        string configMethodKey = ConfigMethodsKey;
+        configMethodKey = configMethodKey.Replace("#RETURN#", value);
+        configMethodKey = configMethodKey.Replace("#NUM#", "");
+        configMethodKey = configMethodKey.Replace("#KEY#", String.Format($"({strFieldName})"));
+        configMethodKey = configMethodKey.Replace("#PARAM#", strParam);
+        configMethodKey = configMethodKey.Replace("#ERRER#", strError);
+        fileContent = fileContent.Replace("#CONFIGMETHODSKEY#", configMethodKey);
     }
     
+    // 处理 主副KeyList
+    private static void DealWithConfigDicViceList() {
+        List<TableRules.TableField> fieldList = new List<TableRules.TableField>();
+        fieldList.Add(tableRule.fieldList.Find((x) => x.fieldName == tableRule.mainKey));
+        var fields = tableRule.fieldList.FindAll((x) => x.viceKeyValue > 0);
+        fields.Sort((x, y)=>x.viceKeyValue < y.viceKeyValue ? 1 : -1);
+        for (int i = 0; i < fields.Count; i++) {
+            fieldList.Add(fields[i]);
+        }
+        var configDic = "";
+        var configInit = "";
+        var configMethodKey = "";
+        var strKey = "";
+        var strMatch = "";
+        var strFieldKey = "";
+        var strParam = "";
+        var strError = "";
+        var value = "Table" + tableRule.name + "Class";
+        for (int i = 0; i < fieldList.Count; i++) {
+            var isEnd = i == fieldList.Count - 1;
+            var fileName = StringUtil.ToLowerFirstChar(fieldList[i].fieldName);
+            var enumField = fieldList[i].enumField.ToString().ToLower();
+            strKey += enumField;
+            var key = i == 0 ? strKey : String.Format($"({strKey})");
+            var strNum = isEnd ? "" : (i + 1).ToString();
+            var strReturn = isEnd ? value : String.Format($"List<{value}>");
+            strMatch += "x." + fieldList[i].fieldName;
+            strFieldKey += fileName;
+            strParam += enumField + " " + fileName;
+            strError += fieldList[i].fieldName + "：{" + fileName + "}";
+            // 字段
+            var configDicTp = ConfigDicTp;
+            configDicTp = configDicTp.Replace("#KEY#", key);
+            configDicTp = configDicTp.Replace("#VALUE#", strReturn);
+            configDicTp = configDicTp.Replace("#NUM#", strNum);
+            configDic += configDicTp;
+            // 初始化 
+            var configInitTp = isEnd ? ConfigInitDic : ConfigInitDicList;
+            configInitTp = configInitTp.Replace("#KEY#", key);
+            configInitTp = configInitTp.Replace("#VALUE#", value);
+            configInitTp = configInitTp.Replace("#NUM#", strNum);
+            configInitTp = configInitTp.Replace("#MATCH#", strMatch);
+            configInit += configInitTp;
+            // 函数
+            var configMethodKeyTp = ConfigMethodsKey;
+            configMethodKeyTp = configMethodKeyTp.Replace("#RETURN#", strReturn);
+            configMethodKeyTp = configMethodKeyTp.Replace("#NUM#", strNum);
+            configMethodKeyTp = configMethodKeyTp.Replace("#KEY#", i == 0 ? strFieldKey : String.Format($"({strFieldKey})"));
+            configMethodKeyTp = configMethodKeyTp.Replace("#PARAM#", strParam);
+            configMethodKeyTp = configMethodKeyTp.Replace("#ERRER#", strError);
+            configMethodKey += configMethodKeyTp;
+            if (!isEnd) {
+                configDic += "\r\n\t\t";
+                configInit += "\r\n\t\t\t";
+                configMethodKey += "\r\n\r\n";
+                strKey += ", ";
+                strMatch += ", ";
+                strFieldKey += ", ";
+                strParam += ", ";
+                strError += ", ";
+            }
+        }
+        fileContent = fileContent.Replace("#CONFIGDIC#", configDic);
+        fileContent = fileContent.Replace("#CONFIGDICINIT#", configInit);
+        fileContent = fileContent.Replace("#CONFIGMETHODSKEY#", configMethodKey);
+    }
+
+    #endregion
+
+    private static string fileContent;
+    private static TableRules.TableRule tableRule;
+    private static TableRules tableRules;
     /// <summary>
     /// 表类的模板文件
     /// </summary>
@@ -72,4 +282,22 @@ public class TableEditor : Editor {
     /// </summary>
     private const string TableScriptPath = "Assets/Game/Scripts/Table";
 
+#region 模板
+    private const string ConfigDicTp = "private readonly Dictionary<#KEY#, #VALUE#> cacheDic#NUM#;";
+    private const string ConfigInitDic = "cacheDic#NUM# = LoadTableDic<#KEY#, #VALUE#>(x => (#MATCH#));";
+    private const string ConfigInitDicList = "cacheDic#NUM# = LoadTableDicList<#KEY#, #VALUE#>(x => (#MATCH#));";
+    private const string ConfigMethodsKey = 
+        "\t\t/// <summary>\r\n" +
+        "\t\t/// 根据key找表数据\r\n" +
+        "\t\t/// </summary>\r\n" +
+        "\t\tpublic #RETURN# GetConfigDataByKey(#PARAM#, bool showTips = true) {\r\n" +
+        "\t\t\tif (cacheDic#NUM#.ContainsKey(#KEY#)) {\r\n" +
+        "\t\t\t\treturn cacheDic#NUM#[#KEY#];\r\n" +
+        "\t\t\t}\r\n" +
+        "\t\t\tif (showTips) {\r\n" +
+        "\t\t\t\tDebug.LogError(String.Format($\"查找表：{CsvPath} 失败, #ERRER#\"));\r\n" +
+        "\t\t\t}\r\n" +
+        "\t\t\treturn null;\r\n" +
+        "\t\t}";
+#endregion
 }

@@ -4,15 +4,18 @@ using UnityEngine;
 
 namespace DCFrame.Utility {
 	public abstract class StringUtil {
-
-		public static StringBuilder builder { get; } = new StringBuilder();
+		
+		/// <summary>
+		/// 首字母小写
+		/// </summary>
+		public static string ToLowerFirstChar(string str) {
+			if (string.IsNullOrEmpty(str)) return str;
+			return char.ToLower(str[0]) + str.Substring(1);
+		}
 
 		/// <summary>
 		/// 移除字符串中匹配的字符串之前的字符
 		/// </summary>
-		/// <param name="str"></param>
-		/// <param name="matchStr"></param>
-		/// <returns></returns>
 		public static string StringRemoveBeforeByStr(string str, string matchStr) {
 			var index = str.IndexOf(matchStr, StringComparison.Ordinal);
 			if(index != -1) {
@@ -24,9 +27,6 @@ namespace DCFrame.Utility {
 		/// <summary>
 		/// 移除字符串中匹配的字符串之后的字符
 		/// </summary>
-		/// <param name="str"></param>
-		/// <param name="matchStr"></param>
-		/// <returns></returns>
 		public static string StringRemoveAfterByStr(string str, string matchStr) {
             var index = str.IndexOf(matchStr, StringComparison.Ordinal);
             if (index != -1) {
@@ -38,8 +38,6 @@ namespace DCFrame.Utility {
 		/// <summary>
 		/// 判断字符中是否有中文
 		/// </summary>
-		/// <param name="c"></param>
-		/// <returns></returns>
 		public static bool CheckCharIsChinese(char c) {
 			return c >= 0x4E00 && c <= 0x9FA5;
 		}
@@ -47,8 +45,6 @@ namespace DCFrame.Utility {
 		/// <summary>
 		/// 判断字符串中是否有中文
 		/// </summary>
-		/// <param name="str"></param>
-		/// <returns></returns>
 		public static bool CheckStringHasChinese(string str) {
 			char[] ch = str.ToCharArray();
 			if(str != "") {
@@ -64,8 +60,6 @@ namespace DCFrame.Utility {
 		/// <summary>
 		/// 连接字符串
 		/// </summary>
-		/// <param name="args"></param>
-		/// <returns></returns>
 		public static string ConnectString(params string[] args) {
 			builder.Remove(0, builder.Length);
 			for (int i = 0;i < args.Length;i++) {
@@ -78,8 +72,6 @@ namespace DCFrame.Utility {
 		/// <summary>
 		/// 从字符串中移除颜色富文本标志,如：<color></color>>
 		/// </summary>
-		/// <param name="source"></param>
-		/// <returns></returns>
 		public static string StringRemoveColorMark(string source) {
 			source = StringRemoveByStr(source, "<color", ">", true);
 			source = source.Replace("</color>", Empty);
@@ -119,7 +111,7 @@ namespace DCFrame.Utility {
                 if (startIndex == -1) {
                     return result;
                 }
-                var endIndex = source.IndexOf(endStr, StringComparison.Ordinal);
+                var endIndex = source.IndexOf(endStr, startIndex + startStr.Length, StringComparison.Ordinal);
                 if (endIndex == -1) {
                     return result;
                 }
@@ -135,11 +127,28 @@ namespace DCFrame.Utility {
 
 			return result;
 		}
+        
+        /// <summary>
+        /// 获取是否可以转换成 float，精度约 7 位
+        /// </summary>
+		public static bool CanBeFloat(decimal decVal) {
+			float f = (float)decVal;
+			return Math.Abs((decimal)f - decVal) < 1e-7m;
+		}
+
+        /// <summary>
+        /// 获取是否可以转换成 float，精度约 15 位
+        /// </summary>
+		public static bool CanBeDouble(decimal decVal) {
+			double d = (double)decVal;
+			return Math.Abs((decimal)d - decVal) < 1e-15m;
+		}
 
         /// <summary>
         /// 空字符串
         /// </summary>
         private const string Empty = "";
+        private static StringBuilder builder { get; } = new StringBuilder();
 	}
 }
 

@@ -16,11 +16,18 @@ namespace DCFrame {
             /// 主键名称
             /// </summary>
             public string mainKey;
+            /// <summary>
+            /// 副Key类型
+            /// </summary>
+            public TableConst.EnumViceKey enumViceKey = TableConst.EnumViceKey.None;
+            /// <summary>
+            /// 最大值类型
+            /// </summary>
             public TableConst.EnumConfigMax enumConfigMax = TableConst.EnumConfigMax.None;
             /// <summary>
             /// 字段数据
             /// </summary>
-            public List<TableField> fieldList = new List<TableField>();
+            public List<TableField> fieldList = new();
         }
 
         [System.Serializable]
@@ -28,7 +35,7 @@ namespace DCFrame {
             /// <summary>
             /// 字段名称
             /// </summary>
-            public string fileldName = "";
+            public string fieldName = "";
             /// <summary>
             /// 字段类型
             /// </summary>
@@ -38,9 +45,9 @@ namespace DCFrame {
             /// </summary>
             public bool isLocalize = false;
             /// <summary>
-            /// 是否副Key
+            /// 副Key的索引值
             /// </summary>
-            public bool isViceKey = false;
+            public int viceKeyValue = 0;
             /// <summary>
             /// 是否最大值
             /// </summary>

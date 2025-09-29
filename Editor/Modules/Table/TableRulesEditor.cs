@@ -14,7 +14,9 @@ using UnityEngine;
 public class TableRulesEditor : Editor {
     private void OnEnable() {
         tableRules = AssetDatabase.LoadAssetAtPath<TableRules>(Asset.GetAssetPath("Table/TableRules", Asset.EnumPrefixPath.Settings));
-        tableRules.tableRuleList.Sort((x, y) => string.Compare(x.name, y.name, StringComparison.OrdinalIgnoreCase));
+        if (tableRules && tableRules.tableRuleList.Count > 0) {
+            tableRules.tableRuleList.Sort((x, y) => string.Compare(x.name, y.name, StringComparison.OrdinalIgnoreCase));
+        }
     }
 
     private void OnDisable() {
@@ -75,8 +77,9 @@ public class TableRulesEditor : Editor {
         EditorGUILayout.LabelField("字段名", GUILayout.Width(70));
         EditorGUILayout.LabelField("数据类型", GUILayout.Width(60));
         EditorGUILayout.LabelField("本地化", GUILayout.Width(40));
-        if (isOpenViceKey) {
-            EditorGUILayout.LabelField("副Key", GUILayout.Width(40));
+        var isOpenVice = tableRule.enumViceKey != TableConst.EnumViceKey.None;
+        if (isOpenVice) {
+            EditorGUILayout.LabelField("副Key", GUILayout.Width(50));
         }
         var isOpenMax = tableRule.enumConfigMax != TableConst.EnumConfigMax.None;
         if (isOpenMax) {
@@ -89,12 +92,12 @@ public class TableRulesEditor : Editor {
             EditorGUILayout.LabelField(field.Key, GUILayout.Width(70));
             // 数据类型
             var enumFieldTp = fieldDic[field.Key];
-            var fieldData = tableRule.fieldList.Find((x) => x.fileldName == field.Key);
+            var fieldData = tableRule.fieldList.Find((x) => x.fieldName == field.Key);
             if (fieldData != null) {
                 enumFieldTp = fieldData.enumField;
             }else {
                 fieldData = new TableRules.TableField() {
-                    fileldName = field.Key,
+                    fieldName = field.Key,
                     enumField = fieldDic[field.Key]
                 };
                 tableRule.fieldList.Add(fieldData);
@@ -105,15 +108,18 @@ public class TableRulesEditor : Editor {
             GUILayout.Space(10);
             fieldData.isLocalize = EditorGUILayout.Toggle(fieldData.isLocalize, GUILayout.Width(30));
             // 是否副Key
-            if (isOpenViceKey) {
-                GUILayout.Space(10);
+            if (isOpenVice) {
+                if (field.Key == tableRule.mainKey) {
+                    fieldData.viceKeyValue = 0;
+                }else {
+                    var array = Enumerable.Range(0, fieldDic.Count).Select(i => i == 0 ? "No" : i.ToString()).ToArray();
+                    fieldData.viceKeyValue = EditorGUILayout.Popup("", fieldData.viceKeyValue, array, GUILayout.Width(40));
+                }
             }
-            fieldData.isViceKey = isOpenViceKey && EditorGUILayout.Toggle(fieldData.isViceKey, GUILayout.Width(30));
             // 最大值
             if (isOpenMax) {
                 GUILayout.Space(10);
             }
-            
             fieldData.isConfigMax = isOpenMax && EditorGUILayout.Toggle(fieldData.isConfigMax, GUILayout.Width(30));
             EditorGUILayout.EndHorizontal();
         }
@@ -132,7 +138,8 @@ public class TableRulesEditor : Editor {
             tableRule.mainKey = keyArray[keyIndex];
         }
         // 开启副Key
-        isOpenViceKey = EditorGUILayout.Toggle("开启副Key：", isOpenViceKey, GUILayout.Width(30));
+        List<string> viceList = new List<string>(Enum.GetNames(typeof(TableConst.EnumViceKey)));
+        tableRule.enumViceKey = (TableConst.EnumViceKey)EditorGUILayout.Popup("副Key：",(int)tableRule.enumViceKey, viceList.ToArray());
         // 最大值
         List<string> maxList = new List<string>(Enum.GetNames(typeof(TableConst.EnumConfigMax)));
         tableRule.enumConfigMax = (TableConst.EnumConfigMax)EditorGUILayout.Popup("获取最大值：",(int)tableRule.enumConfigMax, maxList.ToArray());
@@ -180,12 +187,7 @@ public class TableRulesEditor : Editor {
             // 每行数据,只获取第一行数据
             foreach (var kvp in (IDictionary<string, object>)record) {
                 if (!fieldDic.ContainsKey(kvp.Key)) {
-                    var enumFieldType = TableConst.EnumFieldType.String;
-                    if (int.TryParse(kvp.Value.ToString(), out int _)) {
-                        enumFieldType = TableConst.EnumFieldType.Int;
-                    }else if (bool.TryParse(kvp.Value.ToString(), out bool _)) {
-                        enumFieldType = TableConst.EnumFieldType.Bool;
-                    }
+                    var enumFieldType = TableConst.GetEnumFieldType(kvp.Value.ToString());
                     fieldDic.Add(kvp.Key, enumFieldType);
                 }
             }
@@ -357,8 +359,4 @@ public class TableRulesEditor : Editor {
     /// 删除的表名称
     /// </summary>
     private string delTableName = "";
-    /// <summary>
-    /// 是否开启副key
-    /// </summary>
-    private bool isOpenViceKey = false;
 }
