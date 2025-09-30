@@ -9,6 +9,10 @@ namespace DCFrame {
         /// 表数据路径
         /// </summary>
         public const string TableDataPath = "Assets/Game/Table";
+        /// <summary>
+        /// 科学计数法的标识
+        /// </summary>
+        public const string ScientificSign = "`";
         
         /// <summary>
         /// 表最大值枚举

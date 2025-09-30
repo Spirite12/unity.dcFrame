@@ -381,9 +381,10 @@ public class TableRulesEditor : Editor {
     private void RenderBtnTips() {
         if (GUILayout.Button("提示说明")) {
             string str = "";
+            str += String.Format($"CSV配表不允许使用科学计数法，若要使用大数字，则在前方新增 {TableConst.ScientificSign} 字符\n\n");
             str += "删除无用表配置：\n依次查找配置对应的表文件，若查询无果则删除\n\n";
-            str += "副Key：\nVice：生成由主Key和副key的相关表代码\nViceWithList：递增生成由主Key到多副key的相关表代码\n\n";
-            str += "获取最大值：\nSingle：获取当前表字段数据内最大值并构造字段\n\n";
+            str += String.Format($"副Key：\n{nameof(TableConst.EnumViceKey.Vice)}：生成由主Key和副key的相关表代码\n{nameof(TableConst.EnumViceKey.ViceWithList)}：递增生成由主Key到多副key的相关表代码\n\n");
+            str += String.Format($"获取最大值：\n{nameof(TableConst.EnumConfigMax.Single)}：获取当前表字段数据内最大值并构造字段\n\n");
             EditorUtility.DisplayDialog("说明介绍", str, "关闭");
         }
         GUILayout.Space(5);

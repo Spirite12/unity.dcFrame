@@ -61,7 +61,9 @@ public class TableEditor : Editor {
                     break;
                 }
             }
-            CreateTableScript(fileName, tableDataDic);
+            if (tableRule != null) {
+                CreateTableScript(fileName, tableDataDic);
+            }
         }
     }
 
@@ -88,22 +90,20 @@ public class TableEditor : Editor {
     /// <returns></returns>
     private static string WriteTableClassField(Dictionary<string, List<string>> tableDataDic) {
         string fieldContent = "";
-        if (tableRule != null) {
-            var existList = new List<TableRules.TableField>();
-            foreach (var field in tableRule.fieldList) {
-                if (tableDataDic.ContainsKey(field.fieldName)) {
-                    existList.Add(field);
-                }
+        var existList = new List<TableRules.TableField>();
+        foreach (var field in tableRule.fieldList) {
+            if (tableDataDic.ContainsKey(field.fieldName)) {
+                existList.Add(field);
             }
-            int addCount = 0;
-            foreach (var field in existList) {
-                var fileType = field.enumField.ToString().ToLower();
-                string strField = string.Format($"public {fileType} {field.fieldName} {{{{ get; set; }}}}");
-                fieldContent += strField;
-                addCount += 1;
-                if (addCount < existList.Count) {
-                    fieldContent += "\r\n\t\t";
-                }
+        }
+        int addCount = 0;
+        foreach (var field in existList) {
+            var fileType = field.enumField.ToString().ToLower();
+            string strField = string.Format($"public {fileType} {field.fieldName} {{{{ get; set; }}}}");
+            fieldContent += strField;
+            addCount += 1;
+            if (addCount < existList.Count) {
+                fieldContent += "\r\n\t\t";
             }
         }
         return fieldContent;
@@ -115,9 +115,6 @@ public class TableEditor : Editor {
     /// 处理字典数据
     /// </summary>
     private static void DealWithConfigDic(){
-        if (tableRule == null) {
-            return;
-        }
         switch (tableRule.enumViceKey) {
             case TableConst.EnumViceKey.None:
                 DealWithConfigDicNone();
@@ -291,10 +288,6 @@ public class TableEditor : Editor {
     /// 处理最大值数据
     /// </summary>
     private static void DealWithConfigMax(Dictionary<string, List<string>> tableDataDic){
-        if (tableRule == null) {
-            return;
-        }
-
         switch (tableRule.enumConfigMax) {
             case TableConst.EnumConfigMax.None:
                 fileContent = fileContent.Replace("#CONFIGMAX#", "");

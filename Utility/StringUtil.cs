@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
 namespace DCFrame.Utility {
@@ -165,6 +166,17 @@ namespace DCFrame.Utility {
 		public static bool CanBeDouble(decimal decVal) {
 			double d = (double)decVal;
 			return Math.Abs((decimal)d - decVal) < 1e-15m;
+		}
+        
+        /// <summary>
+        /// 判断是否是科学技术法字符串内容
+        /// </summary>
+		public static bool IsScientificNotation(string text) {
+			if (string.IsNullOrWhiteSpace(text)) {
+				return false;
+			}
+			// 匹配科学计数法: 数字 + E/e + 指数
+			return Regex.IsMatch(text, @"^[+-]?\d+(\.\d+)?[eE][+-]?\d+$");
 		}
 
         /// <summary>
