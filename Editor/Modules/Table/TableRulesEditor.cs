@@ -32,6 +32,7 @@ public class TableRulesEditor : Editor {
         if (!tableRules) {
             return;
         }
+        RenderBtnTips();
         RenderToolkitInfo();
         DrawDefaultInspector();
         RenderTableInfo();
@@ -64,6 +65,10 @@ public class TableRulesEditor : Editor {
             EditorUtility.SetDirty(tableRules);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
+        }
+        GUILayout.Space(10);
+        if (GUILayout.Button("一键导表")) {
+            TableEditor.PackageConfig();
         }
     }
 
@@ -340,13 +345,49 @@ public class TableRulesEditor : Editor {
     /// 删除无用表信息
     /// </summary>
     private void RenderDelUnUseConfig() {
-        Debug.LogError("写代码");
-        EditorUtility.SetDirty(tableRules);
-        AssetDatabase.SaveAssets();
-        AssetDatabase.Refresh();
+        string content = "";
+        List<TableRules.TableRule> tableRuleList = new List<TableRules.TableRule>();
+        List<int> ruleIndexList = new List<int>();
+        for (var i = 0; i < tableRules.tableRuleList.Count; i++) {
+            var tableRule = tableRules.tableRuleList[i];
+            if (!GetHasFile(tableRule.name)) {
+                tableRuleList.Add(tableRule);
+                ruleIndexList.Add(i);
+            }
+        }
+        if (tableRuleList.Count <= 0) {
+            EditorUtility.DisplayDialog("删除表配置名", "查询不到无用表配置", "确定");
+            return;
+        }
+        foreach (var rule in tableRuleList) {
+            content += rule.name + "\n";
+        }
+        if (EditorUtility.DisplayDialog("删除表配置名", content, "确定")) {
+            for (int i = ruleIndexList.Count - 1; i >= 0; i--) {
+                var index = ruleIndexList[i];
+                tableRules.tableRuleList.RemoveAt(index);
+            }
+            EditorUtility.SetDirty(tableRules);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+        }
     }
 
     #endregion
+
+    /// <summary>
+    /// 渲染提示说明
+    /// </summary>
+    private void RenderBtnTips() {
+        if (GUILayout.Button("提示说明")) {
+            string str = "";
+            str += "删除无用表配置：\n依次查找配置对应的表文件，若查询无果则删除\n\n";
+            str += "副Key：\nVice：生成由主Key和副key的相关表代码\nViceWithList：递增生成由主Key到多副key的相关表代码\n\n";
+            str += "获取最大值：\nSingle：获取当前表字段数据内最大值并构造字段\n\n";
+            EditorUtility.DisplayDialog("说明介绍", str, "关闭");
+        }
+        GUILayout.Space(5);
+    }
 
     private TableRules tableRules;
     private readonly Dictionary<string, TableConst.EnumFieldType> fieldDic = new();

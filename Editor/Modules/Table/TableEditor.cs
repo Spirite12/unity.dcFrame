@@ -353,6 +353,10 @@ public class TableEditor : Editor {
     /// 处理自定义的代码保存
     /// </summary>
     private static void DealWithCustomSave(string filePath) {
+        if (!File.Exists(filePath)) {
+            fileContent = fileContent.Replace("#CONFIGCUSTOM#", "");
+            return;
+        }
         var csFile = File.ReadAllText(filePath);
         var strSave = StringUtil.StringGetMiddle(csFile, "#region 自定义内容\r\n", "\r\n        #endregion");
         fileContent = fileContent.Replace("#CONFIGCUSTOM#", strSave);
