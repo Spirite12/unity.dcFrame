@@ -108,19 +108,27 @@ public class TableRulesEditor : Editor {
             GUILayout.Space(10);
             fieldData.isLocalize = EditorGUILayout.Toggle(fieldData.isLocalize, GUILayout.Width(30));
             // 是否副Key
-            if (isOpenVice) {
-                if (field.Key == tableRule.mainKey) {
-                    fieldData.viceKeyValue = 0;
-                }else {
-                    var array = Enumerable.Range(0, fieldDic.Count).Select(i => i == 0 ? "No" : i.ToString()).ToArray();
-                    fieldData.viceKeyValue = EditorGUILayout.Popup("", fieldData.viceKeyValue, array, GUILayout.Width(40));
+            if (isOpenVice && field.Key != tableRule.mainKey) {
+                var array = Enumerable.Range(0, fieldDic.Count).Select(i => i == 0 ? "No" : i.ToString()).ToArray();
+                fieldData.viceKeyValue = EditorGUILayout.Popup("", fieldData.viceKeyValue, array, GUILayout.Width(40));
+            }else {
+                fieldData.viceKeyValue = 0;
+                if (isOpenVice) {
+                    GUILayout.Space(43);
                 }
             }
             // 最大值
-            if (isOpenMax) {
-                GUILayout.Space(10);
+            if (!isOpenMax) {
+                fieldData.configMaxValue = 0;
+            }else if(tableRule.enumConfigMax == TableConst.EnumConfigMax.Single) {
+                GUILayout.Space(isOpenVice ? 20 : 10);
+                var isHide = fieldData.enumField == TableConst.EnumFieldType.Bool || fieldData.enumField == TableConst.EnumFieldType.String;
+                if (!isHide) {
+                    fieldData.configMaxValue = EditorGUILayout.Toggle(fieldData.configMaxValue == 1, GUILayout.Width(30)) ? 1 : 0;
+                }else {
+                    GUILayout.Space(30);
+                }
             }
-            fieldData.isConfigMax = isOpenMax && EditorGUILayout.Toggle(fieldData.isConfigMax, GUILayout.Width(30));
             EditorGUILayout.EndHorizontal();
         }
         GUILayout.Space(15);

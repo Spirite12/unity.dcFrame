@@ -1,5 +1,4 @@
 using System;
-using System.ComponentModel;
 using System.Globalization;
 using DCFrame.Utility;
 using UnityEngine;
@@ -17,7 +16,6 @@ namespace DCFrame {
         public enum EnumConfigMax {
             None = 0,
             Single = 1,
-            Multiple = 2,
         }
         
         /// <summary>

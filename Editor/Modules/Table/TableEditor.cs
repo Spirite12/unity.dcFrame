@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using CsvHelper;
 using CsvHelper.Configuration;
@@ -31,7 +32,7 @@ public class TableEditor : Editor {
             if (file.EndsWith(".meta")) {
                 continue;
             }
-            Dictionary<string, string> tableDataDic = new Dictionary<string, string>();
+            Dictionary<string, List<string>> tableDataDic = new Dictionary<string, List<string>>();
             var config = new CsvConfiguration(CultureInfo.InvariantCulture) {
                 HasHeaderRecord = true,  // 如果有表头，设为 true
                 IgnoreBlankLines = true,  // 忽略空行
@@ -40,31 +41,42 @@ public class TableEditor : Editor {
             using var csv = new CsvReader(reader, config);
             // 读取 CSV 并解析成动态对象
             var records = csv.GetRecords<dynamic>();
+            var fileName = Path.GetFileNameWithoutExtension(file);
+            tableRule = tableRules.tableRuleList.Find((x) => x.name == fileName);
+            // 提前判断最大值获取
+            var fieldDic = tableRule != null ? tableRule.fieldList.FindAll((x)=> x.configMaxValue > 0).ToDictionary((x)=>x.fieldName) : new Dictionary<string, TableRules.TableField>();
             // 遍历所有行
             foreach (var record in records) {
                 // 每行数据,只获取第一行数据
                 foreach (var kvp in (IDictionary<string, object>)record) {
                     if (!tableDataDic.ContainsKey(kvp.Key)) {
-                        tableDataDic.Add(kvp.Key, kvp.Value.ToString());
+                        tableDataDic.Add(kvp.Key, new List<string>());
                     }
+                    if (!fieldDic.ContainsKey(kvp.Key)) {
+                        continue;
+                    }
+                    tableDataDic[kvp.Key].Add(kvp.Value.ToString());
                 }
-                break;
+                if (fieldDic.Count == 0) {
+                    break;
+                }
             }
-            CreateTableScript(Path.GetFileNameWithoutExtension(file), tableDataDic);
+            CreateTableScript(fileName, tableDataDic);
         }
     }
 
     /// <summary>
     /// 创建脚本并写入数据
     /// </summary>
-    private static void CreateTableScript(string fileName, Dictionary<string, string> tableDataDic) {
+    private static void CreateTableScript(string fileName, Dictionary<string, List<string>> tableDataDic) {
         string path = Asset.GetTxtPath(TableClassFileName, Asset.EnumPrefixPath.ScriptTemplates);
-        tableRule = tableRules.tableRuleList.Find((x) => x.name == fileName);
         fileContent = File.ReadAllText(path);
         fileContent = fileContent.Replace("#SCRIPTNAME#", fileName);
         fileContent = fileContent.Replace("#SCRIPTFIELD#", WriteTableClassField(tableDataDic));
         DealWithConfigDic();
+        DealWithConfigMax(tableDataDic);
         var filePath = TableScriptPath + "\\Table" + fileName + ".cs";
+        DealWithCustomSave(filePath);
         File.WriteAllText(filePath, fileContent);
     }
 
@@ -74,7 +86,7 @@ public class TableEditor : Editor {
     /// 处理表的类字段
     /// </summary>
     /// <returns></returns>
-    private static string WriteTableClassField(Dictionary<string, string> tableDataDic) {
+    private static string WriteTableClassField(Dictionary<string, List<string>> tableDataDic) {
         string fieldContent = "";
         if (tableRule != null) {
             var existList = new List<TableRules.TableField>();
@@ -96,6 +108,8 @@ public class TableEditor : Editor {
         }
         return fieldContent;
     }
+
+    #region ConfigDic
 
     /// <summary>
     /// 处理字典数据
@@ -134,6 +148,7 @@ public class TableEditor : Editor {
         configInit = configInit.Replace("#KEY#", key);
         configInit = configInit.Replace("#VALUE#", value);
         configInit = configInit.Replace("#MATCH#", "x." + tableRule.mainKey);
+        configInit = configInit.Replace("#NUM#", "");
         fileContent = fileContent.Replace("#CONFIGDICINIT#", configInit);
         // 函数
         string configMethodKey = ConfigMethodsKey;
@@ -267,6 +282,81 @@ public class TableEditor : Editor {
         fileContent = fileContent.Replace("#CONFIGDICINIT#", configInit);
         fileContent = fileContent.Replace("#CONFIGMETHODSKEY#", configMethodKey);
     }
+    
+    #endregion
+    
+    #region ConfigMax
+    
+    /// <summary>
+    /// 处理最大值数据
+    /// </summary>
+    private static void DealWithConfigMax(Dictionary<string, List<string>> tableDataDic){
+        if (tableRule == null) {
+            return;
+        }
+
+        switch (tableRule.enumConfigMax) {
+            case TableConst.EnumConfigMax.None:
+                fileContent = fileContent.Replace("#CONFIGMAX#", "");
+                break;
+            case TableConst.EnumConfigMax.Single:
+                DealWithConfigMaxSingle(tableDataDic);
+                break;
+        }
+    }
+    
+    // 生成最大值变量
+    private static void DealWithConfigMaxSingle(Dictionary<string, List<string>> tableDataDic) {
+        var fieldList = tableRule.fieldList.FindAll((x)=> x.configMaxValue > 0);
+        if (fieldList.Count == 0) {
+            fileContent = fileContent.Replace("#CONFIGMAX#", "");
+            return;
+        }
+        var configMax = "";
+        var addCount = 0;
+        foreach (var field in fieldList) {
+            if (field.enumField is TableConst.EnumFieldType.Bool or TableConst.EnumFieldType.String) {
+                continue;
+            }
+            var configMaxTp = ConfigMaxTp;
+            configMaxTp = configMaxTp.Replace("#FIELDTYPE#", field.enumField.ToString().ToLower());
+            configMaxTp = configMaxTp.Replace("#FIELDNAME#", field.fieldName);
+            decimal maxValue = 0;
+            foreach (var value in tableDataDic[field.fieldName]) {
+                var valueTp = decimal.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture);
+                if (maxValue < valueTp) {
+                    maxValue = valueTp;
+                }
+            }
+            var strValue = maxValue.ToString(CultureInfo.InvariantCulture);
+            if (field.enumField == TableConst.EnumFieldType.Float) {
+                strValue += "f";
+            }
+            configMaxTp = configMaxTp.Replace("#VALUE#", strValue);
+            configMax += configMaxTp;
+            addCount += 1;
+            if (addCount < fieldList.Count) {
+                configMax += "\r\n\t\t";
+            }
+        }
+        if (configMax == "") {
+            fileContent = fileContent.Replace("#CONFIGMAX#", "");
+            return;
+        }
+        configMax = "\r\n\t\t" + configMax + "\r\n";
+        fileContent = fileContent.Replace("#CONFIGMAX#", configMax);
+    }
+
+    #endregion
+
+    /// <summary>
+    /// 处理自定义的代码保存
+    /// </summary>
+    private static void DealWithCustomSave(string filePath) {
+        var csFile = File.ReadAllText(filePath);
+        var strSave = StringUtil.StringGetMiddle(csFile, "#region 自定义内容\r\n", "\r\n        #endregion");
+        fileContent = fileContent.Replace("#CONFIGCUSTOM#", strSave);
+    }
 
     #endregion
 
@@ -283,16 +373,17 @@ public class TableEditor : Editor {
     private const string TableScriptPath = "Assets/Game/Scripts/Table";
 
 #region 模板
-    private const string ConfigDicTp = "private readonly Dictionary<#KEY#, #VALUE#> cacheDic#NUM#;";
-    private const string ConfigInitDic = "cacheDic#NUM# = LoadTableDic<#KEY#, #VALUE#>(x => (#MATCH#));";
-    private const string ConfigInitDicList = "cacheDic#NUM# = LoadTableDicList<#KEY#, #VALUE#>(x => (#MATCH#));";
+    private const string ConfigMaxTp = "public const #FIELDTYPE# Max#FIELDNAME# = #VALUE#;";
+    private const string ConfigDicTp = "private readonly Dictionary<#KEY#, #VALUE#> keyDic#NUM#;";
+    private const string ConfigInitDic = "keyDic#NUM# = LoadTableDic<#KEY#, #VALUE#>(x => (#MATCH#));";
+    private const string ConfigInitDicList = "keyDic#NUM# = LoadTableDicList<#KEY#, #VALUE#>(x => (#MATCH#));";
     private const string ConfigMethodsKey = 
         "\t\t/// <summary>\r\n" +
-        "\t\t/// 根据key找表数据\r\n" +
+        "\t\t/// 找表数据\r\n" +
         "\t\t/// </summary>\r\n" +
         "\t\tpublic #RETURN# GetConfigDataByKey(#PARAM#, bool showTips = true) {\r\n" +
-        "\t\t\tif (cacheDic#NUM#.ContainsKey(#KEY#)) {\r\n" +
-        "\t\t\t\treturn cacheDic#NUM#[#KEY#];\r\n" +
+        "\t\t\tif (keyDic#NUM#.ContainsKey(#KEY#)) {\r\n" +
+        "\t\t\t\treturn keyDic#NUM#[#KEY#];\r\n" +
         "\t\t\t}\r\n" +
         "\t\t\tif (showTips) {\r\n" +
         "\t\t\t\tDebug.LogError(String.Format($\"查找表：{CsvPath} 失败, #ERRER#\"));\r\n" +

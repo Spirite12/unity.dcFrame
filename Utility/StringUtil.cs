@@ -85,7 +85,6 @@ namespace DCFrame.Utility {
 		/// <param name="startStr">开始的字符串标识</param>
 		/// <param name="endStr">结束的字符串标识</param>
 		/// <param name="isRemove">是否直接移除标识内的字符串</param>
-		/// <returns></returns>
 		public static string StringRemoveByStr(string source, string startStr, string endStr, bool isRemove = false) {
 			if (isRemove) {
 				source = StringMidException(source, startStr, endStr);
@@ -103,7 +102,6 @@ namespace DCFrame.Utility {
         /// <param name="startStr">开始的字符串标识</param>
         /// <param name="endStr">结束的字符串标识</param>
         /// <param name="isRemove">是否移除前后标识</param>
-        /// <returns></returns>
         public static string StringMidException(string source, string startStr, string endStr, bool isRemove = true) {
 			string result = source;
 			try {
@@ -126,6 +124,31 @@ namespace DCFrame.Utility {
 			}
 
 			return result;
+		}
+        
+		/// <summary>
+		/// 提取字符串指定的字符标识中的中间字符串
+		/// </summary>
+		/// <param name="source">原字符串</param>
+		/// <param name="startStr">开始的字符串标识</param>
+		/// <param name="endStr">结束的字符串标识</param>
+		public static string StringGetMiddle(string source, string startStr, string endStr) {
+			if (string.IsNullOrEmpty(source) || string.IsNullOrEmpty(startStr) || string.IsNullOrEmpty(endStr)) {
+				return string.Empty;
+			}
+
+			int startIndex = source.IndexOf(startStr, StringComparison.Ordinal);
+			if (startIndex == -1) {
+				return string.Empty;
+			}
+			startIndex += startStr.Length;
+			
+			int endIndex = source.IndexOf(endStr, startIndex, StringComparison.Ordinal);
+			if (endIndex == -1) {
+				return string.Empty;
+			}
+
+			return source.Substring(startIndex, endIndex - startIndex);
 		}
         
         /// <summary>

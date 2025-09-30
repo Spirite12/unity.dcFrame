@@ -49,9 +49,9 @@ namespace DCFrame {
             /// </summary>
             public int viceKeyValue = 0;
             /// <summary>
-            /// 是否最大值
+            /// 最大值索引值
             /// </summary>
-            public bool isConfigMax = false;
+            public int configMaxValue = 0;
         }
     }
 }
