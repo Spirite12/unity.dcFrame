@@ -202,6 +202,7 @@ public class TableEditor : Editor {
         configInit = configInit.Replace("#KEY#", key);
         configInit = configInit.Replace("#VALUE#", value);
         configInit = configInit.Replace("#MATCH#", strMatch);
+        configInit = configInit.Replace("#NUM#", "");
         fileContent = fileContent.Replace("#CONFIGDICINIT#", configInit);
         // 函数
         string configMethodKey = ConfigMethodsKey;
@@ -218,7 +219,7 @@ public class TableEditor : Editor {
         List<TableRules.TableField> fieldList = new List<TableRules.TableField>();
         fieldList.Add(tableRule.fieldList.Find((x) => x.fieldName == tableRule.mainKey));
         var fields = tableRule.fieldList.FindAll((x) => x.viceKeyValue > 0);
-        fields.Sort((x, y)=>x.viceKeyValue < y.viceKeyValue ? 1 : -1);
+        fields.Sort((x, y)=>x.viceKeyValue > y.viceKeyValue ? 1 : -1);
         for (int i = 0; i < fields.Count; i++) {
             fieldList.Add(fields[i]);
         }
