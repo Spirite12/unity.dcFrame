@@ -15,9 +15,9 @@ namespace DCFrame {
                 return 0;
             }
             
-            // 在前缀新增 ` 来避免科学计数，以至于识别成字符串
+            // 在前缀新增标识来避免科学计数，以至于识别成字符串
             if (text.StartsWith(TableConst.ScientificSign)) {
-                text = text.Substring(1);
+                text = text.Substring(TableConst.ScientificSign.Length);
             }
             
             // 判断是否是科学计数法
