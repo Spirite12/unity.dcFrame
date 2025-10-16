@@ -17,13 +17,17 @@ namespace DCFrame {
             /// </summary>
             public string mainKey;
             /// <summary>
+            /// 表类型
+            /// </summary>
+            public TableUtil.EnumTableType enumTableType = TableUtil.EnumTableType.Default;
+            /// <summary>
             /// 副Key类型
             /// </summary>
-            public TableConst.EnumViceKey enumViceKey = TableConst.EnumViceKey.None;
+            public TableUtil.EnumViceKey enumViceKey = TableUtil.EnumViceKey.None;
             /// <summary>
             /// 最大值类型
             /// </summary>
-            public TableConst.EnumConfigMax enumConfigMax = TableConst.EnumConfigMax.None;
+            public TableUtil.EnumConfigMax enumConfigMax = TableUtil.EnumConfigMax.None;
             /// <summary>
             /// 字段数据
             /// </summary>
@@ -39,7 +43,7 @@ namespace DCFrame {
             /// <summary>
             /// 字段类型
             /// </summary>
-            public TableConst.EnumFieldType enumField = TableConst.EnumFieldType.Int;
+            public TableUtil.EnumFieldType enumField = TableUtil.EnumFieldType.Int;
             /// <summary>
             /// 是否多语言
             /// </summary>

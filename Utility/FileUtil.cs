@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -42,6 +43,22 @@ namespace DCFrame.Utility {
 #endif
             prePath = prePath + "\\";
             return Path.Combine(prePath, path);
+        }
+        
+        /// <summary>
+        /// 获取文件是否打开
+        /// </summary>
+        public static bool IsFileLocked(string filePath) {
+            FileStream? stream = null;
+            try {
+                // 以只读模式打开，不允许共享写入
+                stream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.None);
+                return false; // 文件没被占用
+            }catch (IOException) {
+                return true; // 文件被占用
+            }finally {
+                stream?.Close();
+            }
         }
 
         #region 读写文件

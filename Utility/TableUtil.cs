@@ -1,18 +1,44 @@
 using System;
+using System.ComponentModel;
 using System.Globalization;
+using System.IO;
 using DCFrame.Utility;
 using UnityEngine;
 
 namespace DCFrame {
-    public class TableConst : MonoBehaviour {
+    public class TableUtil : MonoBehaviour {
+        /// <summary>
+        /// 科学计数法的标识
+        /// </summary>
+        public const string ScientificSign = "`";
+        /// <summary>
+        /// 表类的模板文件
+        /// </summary>
+        public const string TableClassTpNormal = nameof(TableClassTpNormal);
+        /// <summary>
+        /// 表类的模板文件
+        /// </summary>
+        public const string TableClassTpConst = nameof(TableClassTpConst);
         /// <summary>
         /// 表数据路径
         /// </summary>
         public const string TableDataPath = "Assets/Game/Table";
         /// <summary>
-        /// 科学计数法的标识
+        /// 表脚本路径
         /// </summary>
-        public const string ScientificSign = "`";
+        public const string TableScriptPath = "Assets/Game/Scripts/Table";
+        
+        /// <summary>
+        /// 表类型
+        /// </summary>
+        public enum EnumTableType {
+            [Description("默认表")]
+            Default = 0,
+            [Description("常量表")]
+            Const = 1,
+            [Description("枚举表")]
+            Enum = 2,
+        }
         
         /// <summary>
         /// 表最大值枚举
@@ -68,6 +94,22 @@ namespace DCFrame {
             }
 
             return EnumFieldType.String;
+        }
+        
+        /// <summary>
+        /// 获取文件路径
+        /// </summary>
+        public static string GetFilePath(string tableName) {
+            var filePath = Path.Combine(TableDataPath, tableName + ".csv");
+            return filePath;
+        }
+
+        /// <summary>
+        /// 获取脚本路径
+        /// </summary>
+        public static string GetScriptPath(string tableName) {
+            var filePath = Path.Combine(TableScriptPath, tableName + ".cs");
+            return filePath;
         }
     }
 }

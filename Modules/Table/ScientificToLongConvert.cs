@@ -16,10 +16,10 @@ namespace DCFrame {
             }
             
             // 在前缀新增标识来避免科学计数，以至于识别成字符串
-            if (text.StartsWith(TableConst.ScientificSign)) {
-                text = text.Substring(TableConst.ScientificSign.Length);
+            if (text.StartsWith(TableUtil.ScientificSign)) {
+                text = text.Substring(TableUtil.ScientificSign.Length);
             }
-            
+
             // 判断是否是科学计数法
             if (StringUtil.IsScientificNotation(text)) {
                 throw new FormatException($"检测到科学计数法格式，数值: {text}，请检查 CSV 文件。");

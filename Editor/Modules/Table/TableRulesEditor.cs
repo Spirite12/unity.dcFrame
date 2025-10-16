@@ -1,14 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
+using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
-using CsvHelper;
-using CsvHelper.Configuration;
 using DCFrame;
+using DCFrame.Utility;
 using UnityEditor;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
+using FileUtil = DCFrame.Utility.FileUtil;
 
 [CustomEditor(typeof(TableRules))]
 public class TableRulesEditor : Editor {
@@ -25,6 +24,10 @@ public class TableRulesEditor : Editor {
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             tableRules = null;
+            if (tableType != null) {
+                tableType.Destroy();
+                tableType = null;
+            }
         }
     }
     
@@ -32,7 +35,6 @@ public class TableRulesEditor : Editor {
         if (!tableRules) {
             return;
         }
-        RenderBtnTips();
         RenderToolkitInfo();
         DrawDefaultInspector();
         RenderTableInfo();
@@ -47,131 +49,50 @@ public class TableRulesEditor : Editor {
         if (tableRules.tableRuleList.Count <= selectIndex) {
             return;
         }
-        AnalyzeTableData();
-        CreateFileData();
-        
-        GUILayout.Space(10);
-        EditorGUILayout.BeginHorizontal();
-        EditorGUILayout.LabelField("表列表: ");
-        List<string> nameList = new List<string>();
-        foreach (var rule in tableRules.tableRuleList) {
-            nameList.Add(rule.name);
-        }
-        selectIndex = EditorGUILayout.Popup(selectIndex, nameList.ToArray());
-        EditorGUILayout.EndHorizontal();
-        
-        GUILayout.Space(10);
-        if (GUILayout.Button("保存表数据")) {
-            EditorUtility.SetDirty(tableRules);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-        }
-        GUILayout.Space(10);
-        if (GUILayout.Button("一键导表")) {
-            TableEditor.PackageConfig();
+        RenderTableToolkit();
+        InitTableType();
+        var tableName = tableRules.tableRuleList[selectIndex].name;
+        if (tableType == null || FileUtil.IsFileLocked(TableUtil.GetFilePath(tableName))) return;
+        if (AnalyzeTableData()) {
+            CreateFileData();
         }
     }
 
-    /// <summary>
-    /// 创建表字段
-    /// </summary>
-    private void CreateFileData() {
-        var tableRule = tableRules.tableRuleList[selectIndex];
-        GUILayout.Space(15);
-        EditorGUILayout.BeginHorizontal();
-        EditorGUILayout.LabelField("字段名", GUILayout.Width(70));
-        EditorGUILayout.LabelField("数据类型", GUILayout.Width(60));
-        EditorGUILayout.LabelField("本地化", GUILayout.Width(40));
-        var isOpenVice = tableRule.enumViceKey != TableConst.EnumViceKey.None;
-        if (isOpenVice) {
-            EditorGUILayout.LabelField("副Key", GUILayout.Width(50));
-        }
-        var isOpenMax = tableRule.enumConfigMax != TableConst.EnumConfigMax.None;
-        if (isOpenMax) {
-            EditorGUILayout.LabelField("最大值", GUILayout.Width(40));
-        }
-        EditorGUILayout.EndHorizontal();
-        List<string> fileList = new List<string>(Enum.GetNames(typeof(TableConst.EnumFieldType)));
-        foreach (var field in fieldDic) {
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField(field.Key, GUILayout.Width(70));
-            // 数据类型
-            var enumFieldTp = fieldDic[field.Key];
-            var fieldData = tableRule.fieldList.Find((x) => x.fieldName == field.Key);
-            if (fieldData != null) {
-                enumFieldTp = fieldData.enumField;
-            }else {
-                fieldData = new TableRules.TableField() {
-                    fieldName = field.Key,
-                    enumField = fieldDic[field.Key]
-                };
-                tableRule.fieldList.Add(fieldData);
-            }
-            enumFieldTp = (TableConst.EnumFieldType)EditorGUILayout.Popup("",(int)enumFieldTp, fileList.ToArray(), GUILayout.Width(60));
-            fieldData.enumField = enumFieldTp;
-            // 是否本地化
-            GUILayout.Space(10);
-            fieldData.isLocalize = EditorGUILayout.Toggle(fieldData.isLocalize, GUILayout.Width(30));
-            // 是否副Key
-            if (isOpenVice && field.Key != tableRule.mainKey) {
-                var array = Enumerable.Range(0, fieldDic.Count).Select(i => i == 0 ? "No" : i.ToString()).ToArray();
-                fieldData.viceKeyValue = EditorGUILayout.Popup("", fieldData.viceKeyValue, array, GUILayout.Width(40));
-            }else {
-                fieldData.viceKeyValue = 0;
-                if (isOpenVice) {
-                    GUILayout.Space(43);
-                }
-            }
-            // 最大值
-            if (!isOpenMax) {
-                fieldData.configMaxValue = 0;
-            }else if(tableRule.enumConfigMax == TableConst.EnumConfigMax.Single) {
-                GUILayout.Space(isOpenVice ? 20 : 10);
-                var isHide = fieldData.enumField == TableConst.EnumFieldType.Bool || fieldData.enumField == TableConst.EnumFieldType.String;
-                if (!isHide) {
-                    fieldData.configMaxValue = EditorGUILayout.Toggle(fieldData.configMaxValue == 1, GUILayout.Width(30)) ? 1 : 0;
-                }else {
-                    GUILayout.Space(30);
-                }
-            }
-            EditorGUILayout.EndHorizontal();
-        }
-        GUILayout.Space(15);
-        // 主Key
-        var keyArray = fieldDic.Keys.ToArray();
-        var keyIndex = 0;
-        for (int i = 0; i < keyArray.Length; i++) {
-            if (keyArray[i] == tableRule.mainKey) {
-                keyIndex = i;
-                break;
-            }
-        }
-        keyIndex = EditorGUILayout.Popup("主Key：", keyIndex, keyArray);
-        if (keyArray[keyIndex] != null) {
-            tableRule.mainKey = keyArray[keyIndex];
-        }
-        // 开启副Key
-        List<string> viceList = new List<string>(Enum.GetNames(typeof(TableConst.EnumViceKey)));
-        tableRule.enumViceKey = (TableConst.EnumViceKey)EditorGUILayout.Popup("副Key：",(int)tableRule.enumViceKey, viceList.ToArray());
-        // 最大值
-        List<string> maxList = new List<string>(Enum.GetNames(typeof(TableConst.EnumConfigMax)));
-        tableRule.enumConfigMax = (TableConst.EnumConfigMax)EditorGUILayout.Popup("获取最大值：",(int)tableRule.enumConfigMax, maxList.ToArray());
-    }
-    
-    /// <summary>
-    /// 分析表数据
-    /// </summary>
-    private void AnalyzeTableData() {
+    private void InitTableType() {
         if (tableRules.tableRuleList.Count <= selectIndex) {
             return;
         }
-        if (lastSelectIndex == selectIndex) {
+        var tableRule = tableRules.tableRuleList[selectIndex];
+        if (lastSelectIndex == selectIndex && lastEnumTableType == tableRule.enumTableType) {
             return;
         }
         lastSelectIndex = selectIndex;
+        lastEnumTableType = tableRule.enumTableType;
+        tableType?.Destroy();
+        switch (tableRule.enumTableType) {
+            case TableUtil.EnumTableType.Default:
+                tableType = new TableRulesTypeCommon();
+                break;
+            case TableUtil.EnumTableType.Const:
+                tableType = new TableRulesTypeConst();
+                break;
+            case TableUtil.EnumTableType.Enum:
+                tableType = new TableRulesTypeEnum();
+                break;
+            default:
+                tableType = null;
+                break;
+        }
+        tableType?.Init(tableRules.tableRuleList[selectIndex]);
+    }
+
+    /// <summary>
+    /// 分析表格数据
+    /// </summary>
+    private bool AnalyzeTableData() {
         var tableName = tableRules.tableRuleList[selectIndex].name;
         // 表数据不存
-        if (!GetHasFile(tableName)) {
+        if (!File.Exists(TableUtil.GetFilePath(tableName))) {
             var message = String.Format($"当前配表{tableName}不存在，是否删除当前表配置数据");
             var isOk = EditorUtility.DisplayDialog("说明介绍", message, "删除", "取消");
             if (isOk) {
@@ -183,41 +104,86 @@ public class TableRulesEditor : Editor {
             }else {
                 selectIndex = 0;
             }
-            return;
+            return false;
         }
-        // 解析表数据
-        var config = new CsvConfiguration(CultureInfo.InvariantCulture) {
-            HasHeaderRecord = true,  // 如果有表头，设为 true
-            IgnoreBlankLines = true,  // 忽略空行
-        };
-        var filePath = GetFilePath(tableName);
-        using var reader = new StreamReader(filePath, Encoding.UTF8);
-        using var csv = new CsvReader(reader, config);
-        // 读取 CSV 并解析成动态对象
-        var records = csv.GetRecords<dynamic>();
-        // 遍历所有行
-        foreach (var record in records) {
-            // 每行数据,只获取第一行数据
-            foreach (var kvp in (IDictionary<string, object>)record) {
-                if (!fieldDic.ContainsKey(kvp.Key)) {
-                    var enumFieldType = TableConst.GetEnumFieldType(kvp.Value.ToString());
-                    fieldDic.Add(kvp.Key, enumFieldType);
-                }
-            }
-            break;
-        }
+        return true;
     }
 
     /// <summary>
-    /// 判断是否有文件
+    /// 创建表格内容数据
     /// </summary>
-    private bool GetHasFile(string tableName) {
-        return File.Exists(GetFilePath(tableName));
+    private void CreateFileData() {
+        tableType.OnInspectorGUI();
     }
 
-    private string GetFilePath(string tableName) {
-        var filePath = Path.Combine(TableConst.TableDataPath, tableName + ".csv");
-        return filePath;
+    /// <summary>
+    /// 渲染表工具信息
+    /// </summary>
+    private void RenderTableToolkit() {
+        GUILayout.Space(5);
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button("打开表代码")) {
+            OpenScriptFile();
+        }
+        if (GUILayout.Button("打开表CSV")) {
+            OpenCsvFile();
+        }
+        EditorGUILayout.EndHorizontal();
+        
+        GUILayout.Space(5);
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button("刷新表配置")) {
+            RenderRefreshCurConfig();
+        }
+        if (GUILayout.Button("删除表配置")) {
+            RenderDelCurConfig();
+        }
+        EditorGUILayout.EndHorizontal();
+        
+        GUILayout.Space(5);
+        if (GUILayout.Button("保存表配置")) {
+            EditorUtility.SetDirty(tableRules);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+        }
+        
+        GUILayout.Space(5);
+        if (GUILayout.Button("一键导表")) {
+            TableEditor.PackageConfig();
+        }
+        
+        GUILayout.Space(12);
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField("表列表: ", GUILayout.Width(120));
+        List<string> nameList = new List<string>();
+        foreach (var rule in tableRules.tableRuleList) {
+            nameList.Add(rule.name.Replace("Table", ""));
+        }
+        selectIndex = EditorGUILayout.Popup(selectIndex, nameList.ToArray());
+        EditorGUILayout.EndHorizontal();
+        
+        GUILayout.Space(5);
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField("表类型: ", GUILayout.Width(120));
+        var tableRule = tableRules.tableRuleList[selectIndex];
+        var typeList = CommonUtil.GetEnumDescriptions<TableUtil.EnumTableType>();
+        tableRule.enumTableType = (TableUtil.EnumTableType)EditorGUILayout.Popup((int)tableRule.enumTableType, typeList.ToArray());
+        EditorGUILayout.EndHorizontal();
+    }
+
+    private void OpenCsvFile() {
+        var tableName = tableRules.tableRuleList[selectIndex].name;
+        string filePath = TableUtil.GetFilePath(tableName);
+        Process.Start(new ProcessStartInfo {
+            FileName = filePath,
+            UseShellExecute = true // 必须为 true 才能用默认程序打开
+        });
+    }
+    
+    private void OpenScriptFile() {
+        var tableName = tableRules.tableRuleList[selectIndex].name;
+        string filePath = TableUtil.GetScriptPath(tableName);
+        CommonUtil.OpenScript(filePath);
     }
 
     #endregion
@@ -229,6 +195,7 @@ public class TableRulesEditor : Editor {
     /// </summary>
     private void RenderToolkitInfo() {
         EditorGUILayout.LabelField("工具：");
+        RenderBtnTips();
         // 查询
         GUILayout.BeginHorizontal();
         findTableName = GUILayout.TextField(findTableName);
@@ -257,9 +224,6 @@ public class TableRulesEditor : Editor {
         GUILayout.BeginHorizontal();
         if (GUILayout.Button("删除无用表配置")) {
             RenderDelUnUseConfig();
-        }
-        if (GUILayout.Button("删除当前表配置")) {
-            RenderDelCurConfig();
         }
         GUILayout.EndHorizontal();
         GUILayout.Space(6);
@@ -294,7 +258,7 @@ public class TableRulesEditor : Editor {
             return;
         }
 
-        if (!GetHasFile(newTableName)) {
+        if (!File.Exists(TableUtil.GetFilePath(newTableName))) {
             EditorUtility.DisplayDialog("说明介绍", "无法创建，当前配表数据不存在", "关闭");
             return;
         }
@@ -350,7 +314,7 @@ public class TableRulesEditor : Editor {
         List<int> ruleIndexList = new List<int>();
         for (var i = 0; i < tableRules.tableRuleList.Count; i++) {
             var tableRule = tableRules.tableRuleList[i];
-            if (!GetHasFile(tableRule.name)) {
+            if (!File.Exists(TableUtil.GetFilePath(tableRule.name))) {
                 tableRuleList.Add(tableRule);
                 ruleIndexList.Add(i);
             }
@@ -373,26 +337,38 @@ public class TableRulesEditor : Editor {
         }
     }
 
-    #endregion
-
+    /// <summary>
+    /// 刷新表配置
+    /// </summary>
+    private void RenderRefreshCurConfig() {
+        if (tableType == null) {
+            return;
+        }
+        tableType.Destroy();
+        tableType.Init(tableRules.tableRuleList[selectIndex]);
+    }
+    
     /// <summary>
     /// 渲染提示说明
     /// </summary>
     private void RenderBtnTips() {
         if (GUILayout.Button("提示说明")) {
             string str = "";
-            str += String.Format($"CSV配表不允许使用科学计数法，若要使用大数字，则在前方新增 {TableConst.ScientificSign} 字符\n\n");
+            str += String.Format($"CSV配表不允许使用科学计数法，若要使用大数字，则在前方新增 {TableUtil.ScientificSign} 字符\n\n");
             str += "删除无用表配置：\n依次查找配置对应的表文件，若查询无果则删除\n\n";
-            str += String.Format($"副Key：\n{nameof(TableConst.EnumViceKey.Vice)}：生成由主Key和副key的相关表代码\n{nameof(TableConst.EnumViceKey.ViceWithList)}：递增生成由主Key到多副key的相关表代码\n\n");
-            str += String.Format($"获取最大值：\n{nameof(TableConst.EnumConfigMax.Single)}：获取当前表字段数据内最大值并构造字段\n\n");
+            str += String.Format($"副Key：\n{nameof(TableUtil.EnumViceKey.Vice)}：生成由主Key和副key的相关表代码\n{nameof(TableUtil.EnumViceKey.ViceWithList)}：递增生成由主Key到多副key的相关表代码\n\n");
+            str += String.Format($"获取最大值：\n{nameof(TableUtil.EnumConfigMax.Single)}：获取当前表字段数据内最大值并构造字段\n\n");
             EditorUtility.DisplayDialog("说明介绍", str, "关闭");
         }
         GUILayout.Space(5);
     }
 
+    #endregion
+
     private TableRules tableRules;
-    private readonly Dictionary<string, TableConst.EnumFieldType> fieldDic = new();
+    private ITableType tableType;
     private int lastSelectIndex = -1;
+    private TableUtil.EnumTableType lastEnumTableType;
     /// <summary>
     /// 所选择的列表
     /// </summary>
