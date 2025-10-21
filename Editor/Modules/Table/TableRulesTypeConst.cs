@@ -23,7 +23,7 @@ public class TableRulesTypeConst : ITableType {
         }
         catch (Exception ex) {
             tableList.Clear();
-            Debug.LogError($"CSV 解析失败：{ex.Message}\n{ex.StackTrace}");
+            Debug.LogError($"CSV 解析常量表失败：{ex.Message}\n{ex.StackTrace}");
         }
     }
 
@@ -68,7 +68,6 @@ public class TableRulesTypeConst : ITableType {
     private string fileContent;
     private TableRules.TableRule tableRule;
     private List<TableConstClass> tableList = new();
-    private ITableType tableTypeImplementation;
 
     /// <summary>
     /// 常量类

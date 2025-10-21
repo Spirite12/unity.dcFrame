@@ -21,6 +21,30 @@ namespace DCFrame {
             /// </summary>
             public TableUtil.EnumTableType enumTableType = TableUtil.EnumTableType.Default;
             /// <summary>
+            /// 默认表数据
+            /// </summary>
+            public TableTypeDefault defaultData = new();
+            /// <summary>
+            /// 枚举表数据
+            /// </summary>
+            public List<TableTypeEnum> enumList = new();
+        }
+        
+        [System.Serializable]
+        public class TableTypeEnum {
+            /// <summary>
+            /// 枚举标识
+            /// </summary>
+            public string sign;
+            /// <summary>
+            /// 枚举值标识本地化列表
+            /// </summary>
+            public List<string> valueSignList = new();
+        }
+
+        [System.Serializable]
+        public class TableTypeDefault {
+            /// <summary>
             /// 副Key类型
             /// </summary>
             public TableUtil.EnumViceKey enumViceKey = TableUtil.EnumViceKey.None;

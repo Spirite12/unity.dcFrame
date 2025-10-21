@@ -20,6 +20,10 @@ namespace DCFrame {
         /// </summary>
         public const string TableClassTpConst = nameof(TableClassTpConst);
         /// <summary>
+        /// 表类的模板文件
+        /// </summary>
+        public const string TableClassTpEnum = nameof(TableClassTpEnum);
+        /// <summary>
         /// 表数据路径
         /// </summary>
         public const string TableDataPath = "Assets/Game/Table";

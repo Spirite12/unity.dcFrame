@@ -34,11 +34,11 @@ public class TableRulesTypeCommon : ITableType {
         EditorGUILayout.LabelField("字段名", GUILayout.Width(70));
         EditorGUILayout.LabelField("数据类型", GUILayout.Width(60));
         EditorGUILayout.LabelField("本地化", GUILayout.Width(40));
-        var isOpenVice = tableRule.enumViceKey != TableUtil.EnumViceKey.None;
+        var isOpenVice = tableRule.defaultData.enumViceKey != TableUtil.EnumViceKey.None;
         if (isOpenVice) {
             EditorGUILayout.LabelField("副Key", GUILayout.Width(50));
         }
-        var isOpenMax = tableRule.enumConfigMax != TableUtil.EnumConfigMax.None;
+        var isOpenMax = tableRule.defaultData.enumConfigMax != TableUtil.EnumConfigMax.None;
         if (isOpenMax) {
             EditorGUILayout.LabelField("最大值", GUILayout.Width(40));
         }
@@ -49,7 +49,7 @@ public class TableRulesTypeCommon : ITableType {
             EditorGUILayout.LabelField(field.Key, GUILayout.Width(70));
             // 数据类型
             var enumFieldTp = fieldDic[field.Key];
-            var fieldData = tableRule.fieldList.Find((x) => x.fieldName == field.Key);
+            var fieldData = tableRule.defaultData.fieldList.Find((x) => x.fieldName == field.Key);
             if (fieldData != null) {
                 enumFieldTp = fieldData.enumField;
             }else {
@@ -57,7 +57,7 @@ public class TableRulesTypeCommon : ITableType {
                     fieldName = field.Key,
                     enumField = fieldDic[field.Key]
                 };
-                tableRule.fieldList.Add(fieldData);
+                tableRule.defaultData.fieldList.Add(fieldData);
             }
             enumFieldTp = (TableUtil.EnumFieldType)EditorGUILayout.Popup("",(int)enumFieldTp, fileList.ToArray(), GUILayout.Width(60));
             fieldData.enumField = enumFieldTp;
@@ -77,7 +77,7 @@ public class TableRulesTypeCommon : ITableType {
             // 最大值
             if (!isOpenMax) {
                 fieldData.configMaxValue = 0;
-            }else if(tableRule.enumConfigMax == TableUtil.EnumConfigMax.Single) {
+            }else if(tableRule.defaultData.enumConfigMax == TableUtil.EnumConfigMax.Single) {
                 GUILayout.Space(isOpenVice ? 20 : 10);
                 var isHide = fieldData.enumField is TableUtil.EnumFieldType.Bool or TableUtil.EnumFieldType.String;
                 if (!isHide) {
@@ -104,10 +104,10 @@ public class TableRulesTypeCommon : ITableType {
         }
         // 开启副Key
         List<string> viceList = new List<string>(Enum.GetNames(typeof(TableUtil.EnumViceKey)));
-        tableRule.enumViceKey = (TableUtil.EnumViceKey)EditorGUILayout.Popup("副Key：",(int)tableRule.enumViceKey, viceList.ToArray());
+        tableRule.defaultData.enumViceKey = (TableUtil.EnumViceKey)EditorGUILayout.Popup("副Key：",(int)tableRule.defaultData.enumViceKey, viceList.ToArray());
         // 最大值
         List<string> maxList = new List<string>(Enum.GetNames(typeof(TableUtil.EnumConfigMax)));
-        tableRule.enumConfigMax = (TableUtil.EnumConfigMax)EditorGUILayout.Popup("获取最大值：",(int)tableRule.enumConfigMax, maxList.ToArray());
+        tableRule.defaultData.enumConfigMax = (TableUtil.EnumConfigMax)EditorGUILayout.Popup("获取最大值：",(int)tableRule.defaultData.enumConfigMax, maxList.ToArray());
     }
 
     private void AnalyzeTableDataGUI() {
@@ -149,7 +149,7 @@ public class TableRulesTypeCommon : ITableType {
             // 读取 CSV 并解析成动态对象
             var records = csv.GetRecords<dynamic>();
             // 提前判断最大值获取
-            var fieldDic = tableRule != null ? tableRule.fieldList.FindAll((x)=> x.configMaxValue > 0).ToDictionary((x)=>x.fieldName) : new Dictionary<string, TableRules.TableField>();
+            var fieldDic = tableRule != null ? tableRule.defaultData.fieldList.FindAll((x)=> x.configMaxValue > 0).ToDictionary((x)=>x.fieldName) : new Dictionary<string, TableRules.TableField>();
             // 遍历所有行
             foreach (var record in records) {
                 // 每行数据,只获取第一行数据
@@ -193,7 +193,7 @@ public class TableRulesTypeCommon : ITableType {
     private string WriteTableClassField(Dictionary<string, List<string>> tableDataDic) {
         string fieldContent = "";
         var existList = new List<TableRules.TableField>();
-        foreach (var field in tableRule.fieldList) {
+        foreach (var field in tableRule.defaultData.fieldList) {
             if (tableDataDic.ContainsKey(field.fieldName)) {
                 existList.Add(field);
             }
@@ -217,7 +217,7 @@ public class TableRulesTypeCommon : ITableType {
     /// 处理字典数据
     /// </summary>
     private void DealWithConfigDic(){
-        switch (tableRule.enumViceKey) {
+        switch (tableRule.defaultData.enumViceKey) {
             case TableUtil.EnumViceKey.None:
                 DealWithConfigDicNone();
                 break;
@@ -232,7 +232,7 @@ public class TableRulesTypeCommon : ITableType {
 
     // 处理 主Key
     private void DealWithConfigDicNone() {
-        var mainKeyFieldType = tableRule.fieldList.Find((x)=> x.fieldName == tableRule.mainKey).enumField;
+        var mainKeyFieldType = tableRule.defaultData.fieldList.Find((x)=> x.fieldName == tableRule.mainKey).enumField;
         var key = mainKeyFieldType.ToString().ToLower();
         var fieldName = tableRule.mainKey.ToLower();
         var value = tableRule.name + "Class";
@@ -262,8 +262,8 @@ public class TableRulesTypeCommon : ITableType {
     // 处理 主副Key
     private void DealWithConfigDicVice() {
         List<TableRules.TableField> fieldList = new List<TableRules.TableField>();
-        fieldList.Add(tableRule.fieldList.Find((x) => x.fieldName == tableRule.mainKey));
-        var fields = tableRule.fieldList.FindAll((x) => x.viceKeyValue > 0);
+        fieldList.Add(tableRule.defaultData.fieldList.Find((x) => x.fieldName == tableRule.mainKey));
+        var fields = tableRule.defaultData.fieldList.FindAll((x) => x.viceKeyValue > 0);
         fields.Sort((x, y)=>x.viceKeyValue > y.viceKeyValue ? 1 : -1);
         for (int i = 0; i < fields.Count; i++) {
             fieldList.Add(fields[i]);
@@ -319,8 +319,8 @@ public class TableRulesTypeCommon : ITableType {
     // 处理 主副KeyList
     private void DealWithConfigDicViceList() {
         List<TableRules.TableField> fieldList = new List<TableRules.TableField>();
-        fieldList.Add(tableRule.fieldList.Find((x) => x.fieldName == tableRule.mainKey));
-        var fields = tableRule.fieldList.FindAll((x) => x.viceKeyValue > 0);
+        fieldList.Add(tableRule.defaultData.fieldList.Find((x) => x.fieldName == tableRule.mainKey));
+        var fields = tableRule.defaultData.fieldList.FindAll((x) => x.viceKeyValue > 0);
         fields.Sort((x, y)=>x.viceKeyValue > y.viceKeyValue ? 1 : -1);
         for (int i = 0; i < fields.Count; i++) {
             fieldList.Add(fields[i]);
@@ -391,7 +391,7 @@ public class TableRulesTypeCommon : ITableType {
     /// 处理最大值数据
     /// </summary>
     private void DealWithConfigMax(Dictionary<string, List<string>> tableDataDic){
-        switch (tableRule.enumConfigMax) {
+        switch (tableRule.defaultData.enumConfigMax) {
             case TableUtil.EnumConfigMax.None:
                 fileContent = fileContent.Replace("#CONFIGMAX#", "");
                 break;
@@ -403,7 +403,7 @@ public class TableRulesTypeCommon : ITableType {
     
     // 生成最大值变量
     private void DealWithConfigMaxSingle(Dictionary<string, List<string>> tableDataDic) {
-        var fieldList = tableRule.fieldList.FindAll((x)=> x.configMaxValue > 0);
+        var fieldList = tableRule.defaultData.fieldList.FindAll((x)=> x.configMaxValue > 0);
         if (fieldList.Count == 0) {
             fileContent = fileContent.Replace("#CONFIGMAX#", "");
             return;
