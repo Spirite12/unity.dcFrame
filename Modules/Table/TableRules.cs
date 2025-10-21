@@ -37,9 +37,9 @@ namespace DCFrame {
             /// </summary>
             public string sign;
             /// <summary>
-            /// 枚举值标识本地化列表
+            /// 是否多语言
             /// </summary>
-            public List<string> valueSignList = new();
+            public bool isLocalize = false;
         }
 
         [System.Serializable]

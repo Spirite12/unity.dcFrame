@@ -52,40 +52,33 @@ public class TableRulesTypeEnum : ITableType {
             nameList.Add(table.Key);
         }
         selectIndex = EditorGUILayout.Popup(selectIndex, nameList.ToArray());
-        var data = tableDic.ElementAt(selectIndex);
-        tableTypeEnum = tableRule.enumList.Find(x => x.sign == data.Key);
         EditorGUILayout.EndHorizontal();
         
         // 枚举字段 + 枚举本地化
         GUILayout.Space(15);
         EditorGUILayout.BeginHorizontal();
-        EditorGUILayout.LabelField("字段名", GUILayout.Width(70));
         EditorGUILayout.LabelField("本地化", GUILayout.Width(40));
-        EditorGUILayout.EndHorizontal();
-        foreach (var table in data.Value) {
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField(table.ValueSign, GUILayout.Width(70));
-            // 是否本地化
-            GUILayout.Space(10);
-            var isLocalize = tableTypeEnum != null && tableTypeEnum.valueSignList.Contains(table.ValueSign);
-            var isToggle = EditorGUILayout.Toggle(isLocalize , GUILayout.Width(30));
-            if (isToggle && !isLocalize) {
-                if (tableTypeEnum == null) {
-                    tableRule.enumList.Add(new TableRules.TableTypeEnum() {
-                        sign = table.EnumSign,
-                        valueSignList = new List<string>() {
-                            table.ValueSign
-                        }
-                    });
-                    
-                }else {
-                    tableTypeEnum.valueSignList.Add(table.ValueSign);
-                }
-            }else if (!isToggle && isLocalize) {
-                tableTypeEnum.valueSignList.Remove(table.ValueSign);
+        EditorGUILayout.BeginHorizontal();
+        // 是否本地化
+        GUILayout.Space(10);
+        var data = tableDic.ElementAt(selectIndex);
+        tableTypeEnum = tableRule.enumList.Find(x => x.sign == data.Key);
+        var isLocalize = tableTypeEnum is { isLocalize: true };
+        var isToggle = EditorGUILayout.Toggle(isLocalize , GUILayout.Width(30));
+        if (isToggle && !isLocalize) {
+            if (tableTypeEnum == null) {
+                tableRule.enumList.Add(new TableRules.TableTypeEnum() {
+                    sign = data.Key,
+                    isLocalize = true
+                });
+            }else {
+                tableTypeEnum.isLocalize = true;
             }
-            EditorGUILayout.EndHorizontal();
+        }else if (!isToggle && isLocalize) {
+            tableTypeEnum.isLocalize = false;
         }
+        EditorGUILayout.EndHorizontal();
+        EditorGUILayout.EndHorizontal();
     }
 
     /// <summary>
@@ -123,7 +116,49 @@ public class TableRulesTypeEnum : ITableType {
     }
     
     private void DealWithField() {
-        fileContent = fileContent.Replace("#CONFIGINFO#", "");
+        string contentInfo = "";
+        foreach (var dic in tableDic) {
+            // 处理枚举
+            string enumInfo = ConfigEnum;
+            string enumSign = dic.Value[0].EnumSign.Replace("Enum", "");
+            enumInfo = enumInfo.Replace("#SIGNNAME#", dic.Value[0].EnumName);
+            enumInfo = enumInfo.Replace("#ENUMSIGN#", enumSign);
+            string enumField = "";
+            var addCount = 0;
+            foreach (var tableClass in dic.Value) {
+                string enumFieldTp = ConfigEnumValue;
+                enumFieldTp = enumFieldTp.Replace("#VALUENAME#", tableClass.ValueName);
+                enumFieldTp = enumFieldTp.Replace("#VALUESIGN#", tableClass.ValueSign);
+                enumFieldTp = enumFieldTp.Replace("#VALUE#", tableClass.Value);
+                addCount += 1;
+                enumFieldTp = enumFieldTp.Replace("#DOT#", addCount < dic.Value.Count ? ",\r\n" : "");
+                enumField += enumFieldTp;
+            }
+            enumInfo = enumInfo.Replace("#ENUM#", enumField);
+            enumInfo += "\r\n";
+            contentInfo += enumInfo;
+            // 处理字典
+            tableTypeEnum = tableRule.enumList.Find(x => x.sign == dic.Key);
+            if (tableTypeEnum is { isLocalize: true }) {
+                string dicInfo = ConfigDic;
+                dicInfo = dicInfo.Replace("#ENUMSIGN#", enumSign);
+                string dicField = "";
+                addCount = 0;
+                foreach (var tableClass in dic.Value) {
+                    string dicFieldTp = ConfigDicValue;
+                    dicFieldTp = dicFieldTp.Replace("#ENUMSIGN#", enumSign);
+                    dicFieldTp = dicFieldTp.Replace("#VALUESIGN#", tableClass.ValueSign);
+                    dicFieldTp = dicFieldTp.Replace("#VALUENAME#", tableClass.ValueName);
+                    addCount += 1;
+                    dicFieldTp = dicFieldTp.Replace("#DOT#", addCount < dic.Value.Count ? ",\r\n" : "");
+                    dicField += dicFieldTp;
+                }
+                dicInfo = dicInfo.Replace("#DIC#", dicField);
+                contentInfo += dicInfo;
+                contentInfo += "\r\n";
+            }
+        }
+        fileContent = fileContent.Replace("#CONFIGINFO#", contentInfo);
     }
 
     #endregion
@@ -164,4 +199,30 @@ public class TableRulesTypeEnum : ITableType {
         /// </summary>
         public string ValueName { get; set; }
     }
+    
+#region 模板
+
+private const string ConfigEnum =
+    "\t\t/// <summary>\r\n" +
+    "\t\t/// #SIGNNAME#\r\n" +
+    "\t\t/// </summary>\r\n" +
+    "\t\tpublic enum #ENUMSIGN#Enum {\r\n" +
+    "#ENUM#\r\n" +
+    "\t\t}\r\n";
+
+private const string ConfigEnumValue =
+    "\t\t\t/// <summary>\r\n" +
+    "\t\t\t/// #VALUENAME#\r\n" +
+    "\t\t\t/// </summary>\r\n" +
+    "\t\t\t#VALUESIGN# = #VALUE##DOT#";
+
+private const string ConfigDic =
+    "\t\tpublic Dictionary<#ENUMSIGN#Enum, string> #ENUMSIGN#Dic = new() {\r\n" +
+    "#DIC#\r\n" +
+    "\t\t};\r\n";
+
+private const string ConfigDicValue =
+    "\t\t\t[#ENUMSIGN#Enum.#VALUESIGN#] = \"#VALUENAME#\"#DOT#";
+
+#endregion
 }
