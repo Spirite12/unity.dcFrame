@@ -20,9 +20,7 @@ public class TableRulesEditor : Editor {
 
     private void OnDisable() {
         if (tableRules) {
-            EditorUtility.SetDirty(tableRules);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
+            SaveRuleData();
             tableRules = null;
             if (tableType != null) {
                 tableType.Destroy();
@@ -63,6 +61,7 @@ public class TableRulesEditor : Editor {
             return;
         }
         var tableRule = tableRules.tableRuleList[selectIndex];
+        
         if (lastSelectIndex == selectIndex && lastEnumTableType == tableRule.enumTableType) {
             return;
         }
@@ -121,38 +120,11 @@ public class TableRulesEditor : Editor {
     /// </summary>
     private void RenderTableToolkit() {
         GUILayout.Space(5);
-        GUILayout.BeginHorizontal();
-        if (GUILayout.Button("打开表代码")) {
-            OpenScriptFile();
-        }
-        if (GUILayout.Button("打开表CSV")) {
-            OpenCsvFile();
-        }
-        EditorGUILayout.EndHorizontal();
-        
-        GUILayout.Space(5);
-        GUILayout.BeginHorizontal();
-        if (GUILayout.Button("刷新表配置")) {
-            RenderRefreshCurConfig();
-        }
-        if (GUILayout.Button("删除表配置")) {
-            RenderDelCurConfig();
-        }
-        EditorGUILayout.EndHorizontal();
-        
-        GUILayout.Space(5);
-        if (GUILayout.Button("保存表配置")) {
-            EditorUtility.SetDirty(tableRules);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-        }
-        
-        GUILayout.Space(5);
         if (GUILayout.Button("一键导表")) {
             TableEditor.PackageConfig();
         }
         
-        GUILayout.Space(12);
+        GUILayout.Space(16);
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("表列表: ", GUILayout.Width(120));
         List<string> nameList = new List<string>();
@@ -184,6 +156,15 @@ public class TableRulesEditor : Editor {
         var tableName = tableRules.tableRuleList[selectIndex].name;
         string filePath = TableUtil.GetScriptPath(tableName);
         CommonUtil.OpenScript(filePath);
+    }
+
+    /// <summary>
+    /// 保存配置
+    /// </summary>
+    private void SaveRuleData() {
+        EditorUtility.SetDirty(tableRules);
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
     }
 
     #endregion
@@ -219,13 +200,37 @@ public class TableRulesEditor : Editor {
             RenderDelConfig();
         }
         GUILayout.EndHorizontal();
-        GUILayout.Space(6);
+
         // 删除
+        GUILayout.Space(6);
         GUILayout.BeginHorizontal();
-        if (GUILayout.Button("删除无用表配置")) {
+        if (GUILayout.Button("删除无用表")) {
             RenderDelUnUseConfig();
         }
+        if (GUILayout.Button("删除表配置")) {
+            RenderDelCurConfig();
+        }
         GUILayout.EndHorizontal();
+        
+        GUILayout.Space(6);
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button("打开表代码")) {
+            OpenScriptFile();
+        }
+        if (GUILayout.Button("打开表CSV")) {
+            OpenCsvFile();
+        }
+        EditorGUILayout.EndHorizontal();
+        
+        GUILayout.Space(6);
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button("保存表配置")) {
+            SaveRuleData();
+        }
+        if (GUILayout.Button("刷新表配置")) {
+            RenderRefreshCurConfig();
+        }
+        EditorGUILayout.EndHorizontal();
         GUILayout.Space(6);
     }
 
@@ -331,9 +336,7 @@ public class TableRulesEditor : Editor {
                 var index = ruleIndexList[i];
                 tableRules.tableRuleList.RemoveAt(index);
             }
-            EditorUtility.SetDirty(tableRules);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
+            SaveRuleData();
         }
     }
 
