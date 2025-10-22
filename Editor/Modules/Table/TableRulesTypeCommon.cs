@@ -12,9 +12,10 @@ using UnityEditor;
 using UnityEngine;
 
 public class TableRulesTypeCommon : ITableType {
-    public void Init(TableRules.TableRule tableRule) {
+    public bool Init(TableRules.TableRule tableRule) {
         Destroy();
         this.tableRule = tableRule;
+        return true;
     }
     
     public void Destroy() {

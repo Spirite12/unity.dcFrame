@@ -11,7 +11,7 @@ using UnityEditor;
 using UnityEngine;
 
 public class TableRulesTypeEnum : ITableType {
-    public void Init(TableRules.TableRule tableRule) {
+    public bool Init(TableRules.TableRule tableRule) {
         this.tableRule = tableRule;
         try {
             var config = new CsvConfiguration(CultureInfo.InvariantCulture);
@@ -24,10 +24,12 @@ public class TableRulesTypeEnum : ITableType {
                 }
                 tableDic[table.EnumSign].Add(table);
             }
+            return true;
         }
         catch (Exception ex) {
             tableDic.Clear();
             Debug.LogError($"CSV 解析枚举表失败：{ex.Message}\n{ex.StackTrace}");
+            return false;
         }
     }
 

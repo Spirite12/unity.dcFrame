@@ -38,8 +38,10 @@ public class TableEditor : Editor {
                     tableType = new TableRulesTypeEnum();
                     break;
             }
-            tableType.Init(tableRule);
-            tableType.AnalyzeAndCreateScripts();
+
+            if (tableType.Init(tableRule)) {
+                tableType.AnalyzeAndCreateScripts();
+            }
         }
     }
     

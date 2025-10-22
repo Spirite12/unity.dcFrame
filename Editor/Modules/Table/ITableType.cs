@@ -4,7 +4,7 @@ public interface  ITableType {
     /// <summary>
     /// 初始化表数据
     /// </summary>
-    public abstract void Init(TableRules.TableRule tableRule);
+    public abstract bool Init(TableRules.TableRule tableRule);
     /// <summary>
     /// 销毁数据
     /// </summary>

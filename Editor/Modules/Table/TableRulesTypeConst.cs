@@ -13,17 +13,19 @@ public class TableRulesTypeConst : ITableType {
     /// <summary>
     /// 分析表数据
     /// </summary>
-    public void Init(TableRules.TableRule tableRule) {
+    public bool Init(TableRules.TableRule tableRule) {
         this.tableRule = tableRule;
         try {
             var config = new CsvConfiguration(CultureInfo.InvariantCulture);
             using var reader = new StreamReader(TableUtil.GetFilePath(tableRule.name), Encoding.UTF8);
             var csv = new CsvReader(reader, config);
             tableList = csv.GetRecords<TableConstClass>().ToList();
+            return true;
         }
         catch (Exception ex) {
             tableList.Clear();
             Debug.LogError($"CSV 解析常量表失败：{ex.Message}\n{ex.StackTrace}");
+            return false;
         }
     }
 

@@ -56,17 +56,15 @@ public class TableRulesEditor : Editor {
         }
     }
 
-    private void InitTableType() {
+    private void InitTableType(bool isForce = false) {
         if (tableRules.tableRuleList.Count <= selectIndex) {
             return;
         }
         var tableRule = tableRules.tableRuleList[selectIndex];
         
-        if (lastSelectIndex == selectIndex && lastEnumTableType == tableRule.enumTableType) {
+        if (!isForce && lastSelectIndex == selectIndex && lastEnumTableType == tableRule.enumTableType) {
             return;
         }
-        lastSelectIndex = selectIndex;
-        lastEnumTableType = tableRule.enumTableType;
         tableType?.Destroy();
         switch (tableRule.enumTableType) {
             case TableUtil.EnumTableType.Default:
@@ -82,7 +80,14 @@ public class TableRulesEditor : Editor {
                 tableType = null;
                 break;
         }
-        tableType?.Init(tableRules.tableRuleList[selectIndex]);
+        if (tableType != null && !tableType.Init(tableRules.tableRuleList[selectIndex])) {
+            selectIndex = lastSelectIndex;
+            tableRule.enumTableType = lastEnumTableType;
+            InitTableType(true);
+        }else {
+            lastSelectIndex = selectIndex;
+            lastEnumTableType = tableRule.enumTableType;
+        }
     }
 
     /// <summary>
