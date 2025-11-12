@@ -584,7 +584,7 @@ public class TableRulesTypeCommon : ITableType {
     private const string ConfigInitDic = "keyDic#FIELDNAME##NUM# = LoadTableDic<#KEY#, #VALUE#>(x => (#MATCH#));";
     private const string ConfigInitDicList = "keyDic#FIELDNAME##NUM# = LoadTableDicList<#KEY#, #VALUE#>(x => (#MATCH#));";
     private const string ConfigMethodsKey = 
-        "\t\tpublic #RETURN# GetConfigDataByKey(#PARAM#, bool showTips = true) {\r\n" +
+        "\t\tpublic #RETURN# GetConfigBy#FIELDNAME#(#PARAM#, bool showTips = true) {\r\n" +
         "\t\t\tif (keyDic#FIELDNAME##NUM#.ContainsKey(#KEY#)) {\r\n" +
         "\t\t\t\treturn keyDic#FIELDNAME##NUM#[#KEY#];\r\n" +
         "\t\t\t}\r\n" +
