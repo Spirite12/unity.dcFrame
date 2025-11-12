@@ -156,7 +156,8 @@ public class TableRulesTypeCommon : ITableType {
                 }
                 var fieldArray = field.fieldKeyList.ToArray();
                 foreach (var name in fieldArray) {
-                    if (GUILayout.Button(name, GUILayout.Width(80))) {
+                    Vector2 size = EditorStyles.popup.CalcSize(new GUIContent(name));
+                    if (GUILayout.Button(name, GUILayout.Width(size.x))) {
                         OnClickRemoveViceKey(field, name);
                     }
                 }
