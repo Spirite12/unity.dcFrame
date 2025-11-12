@@ -20,6 +20,7 @@ public class TableRulesTypeCommon : ITableType {
     
     public void Destroy() {
         fieldDic.Clear();
+        popupDic.Clear();
         fileContent = "";
     }
     
@@ -30,87 +31,15 @@ public class TableRulesTypeCommon : ITableType {
     /// </summary>
     public void OnInspectorGUI() {
         AnalyzeTableDataGUI();
-        GUILayout.Space(15);
-        EditorGUILayout.BeginHorizontal();
-        EditorGUILayout.LabelField("字段名", GUILayout.Width(70));
-        EditorGUILayout.LabelField("数据类型", GUILayout.Width(60));
-        EditorGUILayout.LabelField("本地化", GUILayout.Width(40));
-        var isOpenVice = tableRule.defaultData.enumViceKey != TableUtil.EnumViceKey.None;
-        if (isOpenVice) {
-            EditorGUILayout.LabelField("副Key", GUILayout.Width(50));
-        }
-        var isOpenMax = tableRule.defaultData.enumConfigMax != TableUtil.EnumConfigMax.None;
-        if (isOpenMax) {
-            EditorGUILayout.LabelField("最大值", GUILayout.Width(40));
-        }
-        EditorGUILayout.EndHorizontal();
-        List<string> fileList = new List<string>(Enum.GetNames(typeof(TableUtil.EnumFieldType)));
-        foreach (var field in fieldDic) {
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField(field.Key, GUILayout.Width(70));
-            // 数据类型
-            var enumFieldTp = fieldDic[field.Key];
-            var fieldData = tableRule.defaultData.fieldList.Find((x) => x.fieldName == field.Key);
-            if (fieldData != null) {
-                enumFieldTp = fieldData.enumField;
-            }else {
-                fieldData = new TableRules.TableField() {
-                    fieldName = field.Key,
-                    enumField = fieldDic[field.Key]
-                };
-                tableRule.defaultData.fieldList.Add(fieldData);
-            }
-            enumFieldTp = (TableUtil.EnumFieldType)EditorGUILayout.Popup("",(int)enumFieldTp, fileList.ToArray(), GUILayout.Width(60));
-            fieldData.enumField = enumFieldTp;
-            // 是否本地化
-            GUILayout.Space(10);
-            fieldData.isLocalize = EditorGUILayout.Toggle(fieldData.isLocalize, GUILayout.Width(30));
-            // 是否副Key
-            if (isOpenVice && field.Key != tableRule.mainKey) {
-                var array = Enumerable.Range(0, fieldDic.Count).Select(i => i == 0 ? "No" : i.ToString()).ToArray();
-                fieldData.viceKeyValue = EditorGUILayout.Popup("", fieldData.viceKeyValue, array, GUILayout.Width(40));
-            }else {
-                fieldData.viceKeyValue = 0;
-                if (isOpenVice) {
-                    GUILayout.Space(43);
-                }
-            }
-            // 最大值
-            if (!isOpenMax) {
-                fieldData.configMaxValue = 0;
-            }else if(tableRule.defaultData.enumConfigMax == TableUtil.EnumConfigMax.Single) {
-                GUILayout.Space(isOpenVice ? 20 : 10);
-                var isHide = fieldData.enumField is TableUtil.EnumFieldType.Bool or TableUtil.EnumFieldType.String;
-                if (!isHide) {
-                    fieldData.configMaxValue = EditorGUILayout.Toggle(fieldData.configMaxValue == 1, GUILayout.Width(30)) ? 1 : 0;
-                }else {
-                    GUILayout.Space(30);
-                }
-            }
-            EditorGUILayout.EndHorizontal();
-        }
-        GUILayout.Space(15);
-        // 主Key
-        var keyArray = fieldDic.Keys.ToArray();
-        var keyIndex = 0;
-        for (int i = 0; i < keyArray.Length; i++) {
-            if (keyArray[i] == tableRule.mainKey) {
-                keyIndex = i;
-                break;
-            }
-        }
-        keyIndex = EditorGUILayout.Popup("主Key：", keyIndex, keyArray);
-        if (keyArray[keyIndex] != null) {
-            tableRule.mainKey = keyArray[keyIndex];
-        }
-        // 开启副Key
-        List<string> viceList = new List<string>(Enum.GetNames(typeof(TableUtil.EnumViceKey)));
-        tableRule.defaultData.enumViceKey = (TableUtil.EnumViceKey)EditorGUILayout.Popup("副Key：",(int)tableRule.defaultData.enumViceKey, viceList.ToArray());
-        // 最大值
-        List<string> maxList = new List<string>(Enum.GetNames(typeof(TableUtil.EnumConfigMax)));
-        tableRule.defaultData.enumConfigMax = (TableUtil.EnumConfigMax)EditorGUILayout.Popup("获取最大值：",(int)tableRule.defaultData.enumConfigMax, maxList.ToArray());
+        EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+        TableFieldDataGUI();
+        EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+        TableKeyDataGUI();
     }
 
+    /// <summary>
+    /// 分析数据
+    /// </summary>
     private void AnalyzeTableDataGUI() {
         if (fieldDic.Count > 0) {
             return;
@@ -134,6 +63,149 @@ public class TableRulesTypeCommon : ITableType {
         }
     }
     
+    /// <summary>
+    /// 字段的特有数据渲染
+    /// </summary>
+    private void TableFieldDataGUI() {
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField("字段名", GUILayout.Width(70));
+        EditorGUILayout.LabelField("数据类型", GUILayout.Width(60));
+        EditorGUILayout.LabelField("本地化", GUILayout.Width(40));
+        EditorGUILayout.LabelField("最大值", GUILayout.Width(40));
+        EditorGUILayout.EndHorizontal();
+        List<string> fileList = new List<string>(Enum.GetNames(typeof(TableUtil.EnumFieldType)));
+        foreach (var field in fieldDic) {
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField(field.Key, GUILayout.Width(70));
+            // 数据类型
+            var enumFieldTp = fieldDic[field.Key];
+            var fieldData = tableRule.defaultData.fieldList.Find((x) => x.fieldName == field.Key);
+            if (fieldData != null) {
+                enumFieldTp = fieldData.enumField;
+            }else {
+                fieldData = new TableRules.TableField() {
+                    fieldName = field.Key,
+                    enumField = fieldDic[field.Key]
+                };
+                tableRule.defaultData.fieldList.Add(fieldData);
+            }
+            enumFieldTp = (TableUtil.EnumFieldType)EditorGUILayout.Popup("",(int)enumFieldTp, fileList.ToArray(), GUILayout.Width(60));
+            fieldData.enumField = enumFieldTp;
+            // 是否本地化
+            GUILayout.Space(10);
+            fieldData.isLocalize = EditorGUILayout.Toggle(fieldData.isLocalize, GUILayout.Width(30));
+            // 最大值
+            var isHide = fieldData.enumField is TableUtil.EnumFieldType.Bool or TableUtil.EnumFieldType.String;
+            if (!isHide) {
+                GUILayout.Space(10);
+                fieldData.isMaxValue = EditorGUILayout.Toggle(fieldData.isMaxValue, GUILayout.Width(30));
+            }
+            EditorGUILayout.EndHorizontal();
+        }
+    }
+    
+    /// <summary>
+    /// 字段的查找函数生成
+    /// </summary>
+    private void TableKeyDataGUI() {
+        EditorGUILayout.LabelField("生成查找数据函数");
+        GUILayout.Space(5);
+        int curCount = 0;
+        var keyArray = fieldDic.Keys.ToArray();
+        var noneList = new List<string>();
+        var tableFieldList = new List<TableRules.TableField>();
+        for (int i = 0; i < keyArray.Length; i++) {
+            var fieldData = tableRule.defaultData.fieldList.Find((x) => x.fieldName == keyArray[i]);
+            if (fieldData != null) {
+                if (fieldData.enumMainViceKey != TableUtil.EnumKeyType.None) {
+                    curCount += 1;
+                    tableFieldList.Add(fieldData);
+                }else {
+                    noneList.Add(fieldData.fieldName);
+                }
+            }
+        }
+        // 显示列表数据
+        var typeList = CommonUtil.GetEnumDescriptions<TableUtil.EnumKeyType>();
+        foreach (var field in tableFieldList) {
+            EditorGUILayout.BeginVertical(GUI.skin.box);
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField(field.fieldName, GUILayout.Width(70));
+            field.enumMainViceKey = (TableUtil.EnumKeyType)EditorGUILayout.Popup("",(int)field.enumMainViceKey, typeList.ToArray(), GUILayout.Width(100));
+            if (field.enumMainViceKey is TableUtil.EnumKeyType.None or TableUtil.EnumKeyType.Single) {
+                field.fieldKeyList.Clear();
+                EditorGUILayout.EndHorizontal();
+            }else if (field.enumMainViceKey is TableUtil.EnumKeyType.Multi or TableUtil.EnumKeyType.MultiWithList) {
+                List<string> viceList = new List<string> { "None" };
+                for (int i = 0; i < keyArray.Length; i++) {
+                    if (keyArray[i] != field.fieldName && !field.fieldKeyList.Contains(keyArray[i])) {
+                        viceList.Add(keyArray[i]);
+                    }
+                }
+                if (!popupDic.ContainsKey(field.fieldName) || viceList.Count < popupDic[field.fieldName]) {
+                    popupDic[field.fieldName] = 0;
+                }
+                var viceArray = viceList.ToArray();
+                popupDic[field.fieldName] = EditorGUILayout.Popup("", popupDic[field.fieldName], viceArray, GUILayout.Width(80));
+                EditorGUILayout.EndHorizontal();
+                
+                EditorGUILayout.BeginHorizontal();
+                if (popupDic[field.fieldName] != 0) {
+                    OnClickAddViceKey(field, viceArray[popupDic[field.fieldName]]);
+                    popupDic[field.fieldName] = 0;
+                }
+                var fieldArray = field.fieldKeyList.ToArray();
+                foreach (var name in fieldArray) {
+                    if (GUILayout.Button(name, GUILayout.Width(60))) {
+                        OnClickRemoveViceKey(field, name);
+                    }
+                }
+                EditorGUILayout.EndHorizontal();
+            }
+            EditorGUILayout.EndVertical();
+        }
+        GUILayout.Space(5);
+        // 显示添加数据
+        if (noneList.Count > 0) {
+            EditorGUILayout.LabelField("添加：");
+            EditorGUILayout.BeginHorizontal();
+            if (!popupDic.ContainsKey("addKeyIndex") || noneList.Count < popupDic["addKeyIndex"]) {
+                popupDic["addKeyIndex"] = 0;
+            }
+            popupDic["addKeyIndex"] = EditorGUILayout.Popup("", popupDic["addKeyIndex"], noneList.ToArray(), GUILayout.Width(100));
+            if (curCount < keyArray.Length) {
+                GUILayout.Space(5);
+                if (GUILayout.Button("+", GUILayout.Width(30))) {
+                    OnClickAddKey(noneList[popupDic["addKeyIndex"]]);
+                }
+            }
+            EditorGUILayout.EndHorizontal();
+        }
+    }
+
+    private void OnClickAddKey(string filedName) {
+        var fieldData = tableRule.defaultData.fieldList.Find((x) => x.fieldName == filedName);
+        if (fieldData == null) {
+            return;
+        }
+        popupDic["addKeyIndex"] = 0;
+        fieldData.enumMainViceKey = TableUtil.EnumKeyType.Single;
+        fieldData.fieldKeyList.Clear();
+    }
+    
+    private void OnClickAddViceKey(TableRules.TableField field, string filedName) {
+        field.fieldKeyList.Add(filedName);
+    }
+
+    private void OnClickRemoveViceKey(TableRules.TableField field, string filedName) {
+        foreach (var nameTp in field.fieldKeyList.ToList()) {
+            if (nameTp == filedName) {
+                field.fieldKeyList.Remove(filedName);
+                break;
+            }
+        }
+    }
+    
 #endregion
 
 #region 创建脚本
@@ -150,7 +222,7 @@ public class TableRulesTypeCommon : ITableType {
             // 读取 CSV 并解析成动态对象
             var records = csv.GetRecords<dynamic>();
             // 提前判断最大值获取
-            var fieldDic = tableRule != null ? tableRule.defaultData.fieldList.FindAll((x)=> x.configMaxValue > 0).ToDictionary((x)=>x.fieldName) : new Dictionary<string, TableRules.TableField>();
+            var fieldDic = tableRule != null ? tableRule.defaultData.fieldList.FindAll((x)=> x.isMaxValue).ToDictionary((x)=>x.fieldName) : new Dictionary<string, TableRules.TableField>();
             // 遍历所有行
             foreach (var record in records) {
                 // 每行数据,只获取第一行数据
@@ -176,12 +248,15 @@ public class TableRulesTypeCommon : ITableType {
     private void CreateTableScript(Dictionary<string, List<string>> tableDataDic) {
         string path = Asset.GetTxtPath(TableUtil.TableClassTpNormal, Asset.EnumPrefixPath.ScriptTemplates);
         fileContent = File.ReadAllText(path);
-        fileContent = fileContent.Replace("#SCRIPTNAME#", tableRule.name);
-        fileContent = fileContent.Replace("#SCRIPTFIELD#", WriteTableClassField(tableDataDic));
+        keyReplaceDic.Add("#SCRIPTNAME#", tableRule.name);
+        WriteTableClassField(tableDataDic);
         DealWithConfigDic();
-        DealWithConfigMax(tableDataDic);
+        DealWithConfigMaxSingle(tableDataDic);
         var filePath = TableUtil.GetScriptPath(tableRule.name);
         DealWithCustomSave(filePath);
+        foreach (var keyValue in keyReplaceDic) {
+            fileContent = fileContent.Replace(keyValue.Key, keyValue.Value);
+        }
         File.WriteAllText(filePath, fileContent);
     }
 
@@ -191,7 +266,7 @@ public class TableRulesTypeCommon : ITableType {
     /// 处理表的类字段
     /// </summary>
     /// <returns></returns>
-    private string WriteTableClassField(Dictionary<string, List<string>> tableDataDic) {
+    private void WriteTableClassField(Dictionary<string, List<string>> tableDataDic) {
         string fieldContent = "";
         var existList = new List<TableRules.TableField>();
         foreach (var field in tableRule.defaultData.fieldList) {
@@ -209,7 +284,7 @@ public class TableRulesTypeCommon : ITableType {
                 fieldContent += "\r\n\t\t";
             }
         }
-        return fieldContent;
+        keyReplaceDic.Add("#SCRIPTFIELD#", fieldContent);
     }
 
     #region ConfigDic
@@ -217,57 +292,69 @@ public class TableRulesTypeCommon : ITableType {
     /// <summary>
     /// 处理字典数据
     /// </summary>
-    private void DealWithConfigDic(){
-        switch (tableRule.defaultData.enumViceKey) {
-            case TableUtil.EnumViceKey.None:
-                DealWithConfigDicNone();
-                break;
-            case TableUtil.EnumViceKey.Vice:
-                DealWithConfigDicVice();
-                break;
-            case TableUtil.EnumViceKey.ViceWithList:
-                DealWithConfigDicViceList();
-                break;
+    private void DealWithConfigDic() {
+        bool hasReplace = false;
+        foreach (var field in tableRule.defaultData.fieldList) {
+            switch (field.enumMainViceKey) {
+                case TableUtil.EnumKeyType.None:
+                    break;
+                case TableUtil.EnumKeyType.Single:
+                    DealWithConfigDicMain(field);
+                    hasReplace = true;
+                    break;
+                case TableUtil.EnumKeyType.Multi:
+                    DealWithConfigDicVice(field);
+                    hasReplace = true;
+                    break;
+                case TableUtil.EnumKeyType.MultiWithList:
+                    DealWithConfigDicViceList(field);
+                    hasReplace = true;
+                    break;
+            }
+        }
+        if (!hasReplace) {
+            AddKeyReplace("#CONFIGDIC#", "");
+            AddKeyReplace("#CONFIGDICINIT#", "");
+            AddKeyReplace("#CONFIGMETHODSKEY#", "");
         }
     }
 
     // 处理 主Key
-    private void DealWithConfigDicNone() {
-        var mainKeyFieldType = tableRule.defaultData.fieldList.Find((x)=> x.fieldName == tableRule.mainKey).enumField;
+    private void DealWithConfigDicMain(TableRules.TableField tableField) {
+        var mainKeyFieldType = tableField.enumField;
         var key = mainKeyFieldType.ToString().ToLower();
-        var fieldName = tableRule.mainKey.ToLower();
         var value = tableRule.name + "Class";
         // 字段
         string configDic = ConfigDicTp;
         configDic = configDic.Replace("#KEY#", key);
         configDic = configDic.Replace("#VALUE#", value);
         configDic = configDic.Replace("#NUM#", "");
-        fileContent = fileContent.Replace("#CONFIGDIC#", configDic);
+        configDic = configDic.Replace("#FIELDNAME#", tableField.fieldName);
+        AddKeyReplace("#CONFIGDIC#", configDic);
         // 初始化
         string configInit = ConfigInitDic;
         configInit = configInit.Replace("#KEY#", key);
         configInit = configInit.Replace("#VALUE#", value);
-        configInit = configInit.Replace("#MATCH#", "x." + tableRule.mainKey);
+        configInit = configInit.Replace("#MATCH#", "x." + tableField.fieldName);
         configInit = configInit.Replace("#NUM#", "");
-        fileContent = fileContent.Replace("#CONFIGDICINIT#", configInit);
+        configInit = configInit.Replace("#FIELDNAME#", tableField.fieldName);
+        AddKeyReplace("#CONFIGDICINIT#", configInit);
         // 函数
         string configMethodKey = ConfigMethodsKey;
         configMethodKey = configMethodKey.Replace("#RETURN#", value);
         configMethodKey = configMethodKey.Replace("#NUM#", "");
-        configMethodKey = configMethodKey.Replace("#KEY#", fieldName);
-        configMethodKey = configMethodKey.Replace("#PARAM#", key + " " + fieldName);
-        configMethodKey = configMethodKey.Replace("#ERRER#", fieldName + "：{" + fieldName + "}");
-        fileContent = fileContent.Replace("#CONFIGMETHODSKEY#", configMethodKey);
+        configMethodKey = configMethodKey.Replace("#KEY#", tableField.fieldName);
+        configMethodKey = configMethodKey.Replace("#PARAM#", key + " " + tableField.fieldName);
+        configMethodKey = configMethodKey.Replace("#ERRER#", tableField.fieldName + "：{" + tableField.fieldName + "}");
+        configMethodKey = configMethodKey.Replace("#FIELDNAME#", tableField.fieldName);
+        AddKeyReplace("#CONFIGMETHODSKEY#", configMethodKey);
     }
 
     // 处理 主副Key
-    private void DealWithConfigDicVice() {
-        List<TableRules.TableField> fieldList = new List<TableRules.TableField>();
-        fieldList.Add(tableRule.defaultData.fieldList.Find((x) => x.fieldName == tableRule.mainKey));
-        var fields = tableRule.defaultData.fieldList.FindAll((x) => x.viceKeyValue > 0);
-        fields.Sort((x, y)=>x.viceKeyValue > y.viceKeyValue ? 1 : -1);
-        for (int i = 0; i < fields.Count; i++) {
-            fieldList.Add(fields[i]);
+    private void DealWithConfigDicVice(TableRules.TableField tableField) {
+        var nameList = new List<string>() { tableField.fieldName };
+        foreach (var field in tableField.fieldKeyList) {
+            nameList.Add(field);
         }
         var strKey = "";
         var strFieldName = "";
@@ -275,16 +362,16 @@ public class TableRulesTypeCommon : ITableType {
         var strParam = "";
         var strError = "";
         var addCount = 0;
-        foreach (var field in fieldList) {
-            var fileName = StringUtil.ToLowerFirstChar(field.fieldName);
-            var enumField = field.enumField.ToString().ToLower();
+        foreach (var name in nameList) {
+            var fileName = StringUtil.ToLowerFirstChar(name);
+            var enumField = tableRule.defaultData.fieldList.Find((x)=> x.fieldName == name).enumField.ToString().ToLower();
             strFieldName += fileName;
             strKey += enumField;
-            strMatch += "x." + field.fieldName;
+            strMatch += "x." + name;
             strParam += enumField + " " + fileName;
-            strError += field.fieldName + "：{" + fileName + "}";
+            strError += name + "：{" + fileName + "}";
             addCount += 1;
-            if (addCount < fieldList.Count) {
+            if (addCount < nameList.Count) {
                 strKey += ", ";
                 strMatch += ", ";
                 strFieldName += ", ";
@@ -299,14 +386,16 @@ public class TableRulesTypeCommon : ITableType {
         configDic = configDic.Replace("#KEY#", key);
         configDic = configDic.Replace("#VALUE#", value);
         configDic = configDic.Replace("#NUM#", "");
-        fileContent = fileContent.Replace("#CONFIGDIC#", configDic);
+        configDic = configDic.Replace("#FIELDNAME#", tableField.fieldName);
+        AddKeyReplace("#CONFIGDIC#", configDic);
         // 初始化 
         var configInit = ConfigInitDic;
         configInit = configInit.Replace("#KEY#", key);
         configInit = configInit.Replace("#VALUE#", value);
         configInit = configInit.Replace("#MATCH#", strMatch);
         configInit = configInit.Replace("#NUM#", "");
-        fileContent = fileContent.Replace("#CONFIGDICINIT#", configInit);
+        configInit = configInit.Replace("#FIELDNAME#", tableField.fieldName);
+        AddKeyReplace("#CONFIGDICINIT#", configInit);
         // 函数
         string configMethodKey = ConfigMethodsKey;
         configMethodKey = configMethodKey.Replace("#RETURN#", value);
@@ -314,17 +403,15 @@ public class TableRulesTypeCommon : ITableType {
         configMethodKey = configMethodKey.Replace("#KEY#", String.Format($"({strFieldName})"));
         configMethodKey = configMethodKey.Replace("#PARAM#", strParam);
         configMethodKey = configMethodKey.Replace("#ERRER#", strError);
-        fileContent = fileContent.Replace("#CONFIGMETHODSKEY#", configMethodKey);
+        configMethodKey = configMethodKey.Replace("#FIELDNAME#", tableField.fieldName);
+        AddKeyReplace("#CONFIGMETHODSKEY#", configMethodKey);
     }
     
     // 处理 主副KeyList
-    private void DealWithConfigDicViceList() {
-        List<TableRules.TableField> fieldList = new List<TableRules.TableField>();
-        fieldList.Add(tableRule.defaultData.fieldList.Find((x) => x.fieldName == tableRule.mainKey));
-        var fields = tableRule.defaultData.fieldList.FindAll((x) => x.viceKeyValue > 0);
-        fields.Sort((x, y)=>x.viceKeyValue > y.viceKeyValue ? 1 : -1);
-        for (int i = 0; i < fields.Count; i++) {
-            fieldList.Add(fields[i]);
+    private void DealWithConfigDicViceList(TableRules.TableField tableField) {
+        var nameList = new List<string>() { tableField.fieldName };
+        foreach (var field in tableField.fieldKeyList) {
+            nameList.Add(field);
         }
         var configDic = "";
         var configInit = "";
@@ -335,23 +422,24 @@ public class TableRulesTypeCommon : ITableType {
         var strParam = "";
         var strError = "";
         var value = tableRule.name + "Class";
-        for (int i = 0; i < fieldList.Count; i++) {
-            var isEnd = i == fieldList.Count - 1;
-            var fileName = StringUtil.ToLowerFirstChar(fieldList[i].fieldName);
-            var enumField = fieldList[i].enumField.ToString().ToLower();
+        for (int i = 0; i < nameList.Count; i++) {
+            var isEnd = i == nameList.Count - 1;
+            var fileName = StringUtil.ToLowerFirstChar(nameList[i]);
+            var enumField = tableRule.defaultData.fieldList.Find((x)=> x.fieldName == nameList[i]).enumField.ToString().ToLower();
             strKey += enumField;
             var key = i == 0 ? strKey : String.Format($"({strKey})");
             var strNum = isEnd ? "" : (i + 1).ToString();
             var strReturn = isEnd ? value : String.Format($"List<{value}>");
-            strMatch += "x." + fieldList[i].fieldName;
+            strMatch += "x." + nameList[i];
             strFieldKey += fileName;
             strParam += enumField + " " + fileName;
-            strError += fieldList[i].fieldName + "：{" + fileName + "}";
+            strError += nameList[i] + "：{" + fileName + "}";
             // 字段
             var configDicTp = ConfigDicTp;
             configDicTp = configDicTp.Replace("#KEY#", key);
             configDicTp = configDicTp.Replace("#VALUE#", strReturn);
             configDicTp = configDicTp.Replace("#NUM#", strNum);
+            configDicTp = configDicTp.Replace("#FIELDNAME#", tableField.fieldName);
             configDic += configDicTp;
             // 初始化 
             var configInitTp = isEnd ? ConfigInitDic : ConfigInitDicList;
@@ -359,6 +447,7 @@ public class TableRulesTypeCommon : ITableType {
             configInitTp = configInitTp.Replace("#VALUE#", value);
             configInitTp = configInitTp.Replace("#NUM#", strNum);
             configInitTp = configInitTp.Replace("#MATCH#", strMatch);
+            configInitTp = configInitTp.Replace("#FIELDNAME#", tableField.fieldName);
             configInit += configInitTp;
             // 函数
             var configMethodKeyTp = ConfigMethodsKey;
@@ -367,6 +456,7 @@ public class TableRulesTypeCommon : ITableType {
             configMethodKeyTp = configMethodKeyTp.Replace("#KEY#", i == 0 ? strFieldKey : String.Format($"({strFieldKey})"));
             configMethodKeyTp = configMethodKeyTp.Replace("#PARAM#", strParam);
             configMethodKeyTp = configMethodKeyTp.Replace("#ERRER#", strError);
+            configMethodKeyTp = configMethodKeyTp.Replace("#FIELDNAME#", tableField.fieldName);
             configMethodKey += configMethodKeyTp;
             if (!isEnd) {
                 configDic += "\r\n\t\t";
@@ -379,34 +469,21 @@ public class TableRulesTypeCommon : ITableType {
                 strError += ", ";
             }
         }
-        fileContent = fileContent.Replace("#CONFIGDIC#", configDic);
-        fileContent = fileContent.Replace("#CONFIGDICINIT#", configInit);
-        fileContent = fileContent.Replace("#CONFIGMETHODSKEY#", configMethodKey);
+        AddKeyReplace("#CONFIGDIC#", configDic);
+        AddKeyReplace("#CONFIGDICINIT#", configInit);
+        AddKeyReplace("#CONFIGMETHODSKEY#", configMethodKey);
     }
     
     #endregion
     
     #region ConfigMax
     
-    /// <summary>
-    /// 处理最大值数据
-    /// </summary>
-    private void DealWithConfigMax(Dictionary<string, List<string>> tableDataDic){
-        switch (tableRule.defaultData.enumConfigMax) {
-            case TableUtil.EnumConfigMax.None:
-                fileContent = fileContent.Replace("#CONFIGMAX#", "");
-                break;
-            case TableUtil.EnumConfigMax.Single:
-                DealWithConfigMaxSingle(tableDataDic);
-                break;
-        }
-    }
-    
     // 生成最大值变量
     private void DealWithConfigMaxSingle(Dictionary<string, List<string>> tableDataDic) {
-        var fieldList = tableRule.defaultData.fieldList.FindAll((x)=> x.configMaxValue > 0);
+        var strKey = "#CONFIGMAX#";
+        var fieldList = tableRule.defaultData.fieldList.FindAll((x)=> x.isMaxValue);
         if (fieldList.Count == 0) {
-            fileContent = fileContent.Replace("#CONFIGMAX#", "");
+            keyReplaceDic.Add(strKey, "");
             return;
         }
         var configMax = "";
@@ -420,7 +497,11 @@ public class TableRulesTypeCommon : ITableType {
             configMaxTp = configMaxTp.Replace("#FIELDNAME#", field.fieldName);
             decimal maxValue = 0;
             foreach (var value in tableDataDic[field.fieldName]) {
-                var valueTp = decimal.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture);
+                var strValueTp = value;
+                if (strValueTp.StartsWith(TableUtil.ScientificSign)) {
+                    strValueTp = strValueTp.Replace(TableUtil.ScientificSign, "");
+                }
+                var valueTp = decimal.Parse(strValueTp, NumberStyles.Float, CultureInfo.InvariantCulture);
                 if (maxValue < valueTp) {
                     maxValue = valueTp;
                 }
@@ -437,47 +518,75 @@ public class TableRulesTypeCommon : ITableType {
             }
         }
         if (configMax == "") {
-            fileContent = fileContent.Replace("#CONFIGMAX#", "");
+            keyReplaceDic.Add(strKey, "");
             return;
         }
         configMax = "\r\n\t\t" + configMax + "\r\n";
-        fileContent = fileContent.Replace("#CONFIGMAX#", configMax);
+        keyReplaceDic.Add(strKey, configMax);
     }
 
     #endregion
 
+    #region CustomSave
+    
     /// <summary>
     /// 处理自定义的代码保存
     /// </summary>
-    private static void DealWithCustomSave(string filePath) {
+    private void DealWithCustomSave(string filePath) {
+        var strKey = "#CONFIGCUSTOM#";
         if (!File.Exists(filePath)) {
-            fileContent = fileContent.Replace("#CONFIGCUSTOM#", "");
+            keyReplaceDic.Add(strKey, tableRule.name);
             return;
         }
         var csFile = File.ReadAllText(filePath);
         var strSave = StringUtil.StringGetMiddle(csFile, "#region 自定义内容\r\n", "\r\n        #endregion");
-        fileContent = fileContent.Replace("#CONFIGCUSTOM#", strSave);
+        keyReplaceDic.Add(strKey, strSave);
     }
+    
+    #endregion
 
+    private void AddKeyReplace(string strKey, string strValue) {
+        if (!keyReplaceDic.TryAdd(strKey, strValue)) {
+            switch (strKey) {
+                case "#CONFIGDIC#":
+                    keyReplaceDic[strKey] += "\r\n\t\t";
+                    break;
+                case "#CONFIGDICINIT#":
+                    keyReplaceDic[strKey] += "\r\n\t\t\t";
+                    break;
+                case "#CONFIGMETHODSKEY#":
+                    keyReplaceDic[strKey] += "\r\n\r\n";
+                    break;
+            }
+            keyReplaceDic[strKey] += strValue;
+        }
+    }
+    
     #endregion
     
 #endregion
-    
+
     private static string fileContent;
     private TableRules.TableRule tableRule;
     private readonly Dictionary<string, TableUtil.EnumFieldType> fieldDic = new();
+    /// <summary>
+    /// 替换的字典
+    /// </summary>
+    private readonly Dictionary<string, string> keyReplaceDic = new Dictionary<string, string>();
+    /// <summary>
+    /// 记录多健查找的index值
+    /// </summary>
+    private readonly Dictionary<string, int> popupDic = new Dictionary<string, int>();
+    
 #region 模板
     private const string ConfigMaxTp = "public const #FIELDTYPE# Max#FIELDNAME# = #VALUE#;";
-    private const string ConfigDicTp = "private readonly Dictionary<#KEY#, #VALUE#> keyDic#NUM#;";
-    private const string ConfigInitDic = "keyDic#NUM# = LoadTableDic<#KEY#, #VALUE#>(x => (#MATCH#));";
-    private const string ConfigInitDicList = "keyDic#NUM# = LoadTableDicList<#KEY#, #VALUE#>(x => (#MATCH#));";
+    private const string ConfigDicTp = "private readonly Dictionary<#KEY#, #VALUE#> keyDic#FIELDNAME##NUM#;";
+    private const string ConfigInitDic = "keyDic#FIELDNAME##NUM# = LoadTableDic<#KEY#, #VALUE#>(x => (#MATCH#));";
+    private const string ConfigInitDicList = "keyDic#FIELDNAME##NUM# = LoadTableDicList<#KEY#, #VALUE#>(x => (#MATCH#));";
     private const string ConfigMethodsKey = 
-        "\t\t/// <summary>\r\n" +
-        "\t\t/// 找表数据\r\n" +
-        "\t\t/// </summary>\r\n" +
         "\t\tpublic #RETURN# GetConfigDataByKey(#PARAM#, bool showTips = true) {\r\n" +
-        "\t\t\tif (keyDic#NUM#.ContainsKey(#KEY#)) {\r\n" +
-        "\t\t\t\treturn keyDic#NUM#[#KEY#];\r\n" +
+        "\t\t\tif (keyDic#FIELDNAME##NUM#.ContainsKey(#KEY#)) {\r\n" +
+        "\t\t\t\treturn keyDic#FIELDNAME##NUM#[#KEY#];\r\n" +
         "\t\t\t}\r\n" +
         "\t\t\tif (showTips) {\r\n" +
         "\t\t\t\tDebug.LogError(String.Format($\"查找表：{CsvPath} 失败, #ERRER#\"));\r\n" +

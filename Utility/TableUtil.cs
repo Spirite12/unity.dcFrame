@@ -45,20 +45,17 @@ namespace DCFrame {
         }
         
         /// <summary>
-        /// 表最大值枚举
+        /// 表key类型
         /// </summary>
-        public enum EnumConfigMax {
+        public enum EnumKeyType {
+            [Description("无")]
             None = 0,
+            [Description("单key")]
             Single = 1,
-        }
-        
-        /// <summary>
-        /// 表副Key
-        /// </summary>
-        public enum EnumViceKey {
-            None = 0,
-            Vice = 1,
-            ViceWithList = 2,
+            [Description("多Key")]
+            Multi = 2,
+            [Description("多Key列表")]
+            MultiWithList = 3,
         }
         
         /// <summary>

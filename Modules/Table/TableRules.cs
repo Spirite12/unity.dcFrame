@@ -13,10 +13,6 @@ namespace DCFrame {
             /// </summary>
             public string name;
             /// <summary>
-            /// 主键名称
-            /// </summary>
-            public string mainKey;
-            /// <summary>
             /// 表类型
             /// </summary>
             public TableUtil.EnumTableType enumTableType = TableUtil.EnumTableType.Default;
@@ -45,14 +41,6 @@ namespace DCFrame {
         [System.Serializable]
         public class TableTypeDefault {
             /// <summary>
-            /// 副Key类型
-            /// </summary>
-            public TableUtil.EnumViceKey enumViceKey = TableUtil.EnumViceKey.None;
-            /// <summary>
-            /// 最大值类型
-            /// </summary>
-            public TableUtil.EnumConfigMax enumConfigMax = TableUtil.EnumConfigMax.None;
-            /// <summary>
             /// 字段数据
             /// </summary>
             public List<TableField> fieldList = new();
@@ -73,13 +61,17 @@ namespace DCFrame {
             /// </summary>
             public bool isLocalize = false;
             /// <summary>
-            /// 副Key的索引值
+            /// 是否获取最大值
             /// </summary>
-            public int viceKeyValue = 0;
+            public bool isMaxValue = false;
             /// <summary>
-            /// 最大值索引值
+            /// 多键查询枚举
             /// </summary>
-            public int configMaxValue = 0;
+            public TableUtil.EnumKeyType enumMainViceKey = TableUtil.EnumKeyType.None;
+            /// <summary>
+            /// 多键字段列表
+            /// </summary>
+            public List<string> fieldKeyList = new List<string>();
         }
     }
 }

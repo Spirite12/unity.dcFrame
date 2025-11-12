@@ -22,6 +22,15 @@ namespace DCFrame.Utility {
         }
         
         /// <summary>
+        /// 获取枚举内的单个描述
+        /// </summary>
+        public static string GetDescription(Enum value) {
+            FieldInfo field = value.GetType().GetField(value.ToString());
+            DescriptionAttribute attr = field.GetCustomAttribute<DescriptionAttribute>();
+            return attr != null ? attr.Description : value.ToString();
+        }
+        
+        /// <summary>
         /// 打开脚本到当前 Unity IDE
         /// </summary>
         public static void OpenScript(string filePath, int line = 0) {
