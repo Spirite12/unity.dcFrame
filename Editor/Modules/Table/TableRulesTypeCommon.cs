@@ -156,7 +156,7 @@ public class TableRulesTypeCommon : ITableType {
                 }
                 var fieldArray = field.fieldKeyList.ToArray();
                 foreach (var name in fieldArray) {
-                    if (GUILayout.Button(name, GUILayout.Width(60))) {
+                    if (GUILayout.Button(name, GUILayout.Width(80))) {
                         OnClickRemoveViceKey(field, name);
                     }
                 }
@@ -323,6 +323,7 @@ public class TableRulesTypeCommon : ITableType {
     private void DealWithConfigDicMain(TableRules.TableField tableField) {
         var mainKeyFieldType = tableField.enumField;
         var key = mainKeyFieldType.ToString().ToLower();
+        var fieldName = char.ToLower(tableField.fieldName[0]) + tableField.fieldName.Substring(1);
         var value = tableRule.name + "Class";
         // 字段
         string configDic = ConfigDicTp;
@@ -343,9 +344,9 @@ public class TableRulesTypeCommon : ITableType {
         string configMethodKey = ConfigMethodsKey;
         configMethodKey = configMethodKey.Replace("#RETURN#", value);
         configMethodKey = configMethodKey.Replace("#NUM#", "");
-        configMethodKey = configMethodKey.Replace("#KEY#", tableField.fieldName);
-        configMethodKey = configMethodKey.Replace("#PARAM#", key + " " + tableField.fieldName);
-        configMethodKey = configMethodKey.Replace("#ERRER#", tableField.fieldName + "：{" + tableField.fieldName + "}");
+        configMethodKey = configMethodKey.Replace("#KEY#", fieldName);
+        configMethodKey = configMethodKey.Replace("#PARAM#", key + " " + fieldName);
+        configMethodKey = configMethodKey.Replace("#ERRER#", fieldName + "：{" + fieldName + "}");
         configMethodKey = configMethodKey.Replace("#FIELDNAME#", tableField.fieldName);
         AddKeyReplace("#CONFIGMETHODSKEY#", configMethodKey);
     }
