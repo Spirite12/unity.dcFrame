@@ -7,7 +7,7 @@ using UnityEngine.Localization;
 using UnityEngine.Localization.Settings;
 
 namespace DCFrame {
-    public class Localize { 
+    public class Localize {
 
         /// <summary>
         /// 加载 文本 本地化

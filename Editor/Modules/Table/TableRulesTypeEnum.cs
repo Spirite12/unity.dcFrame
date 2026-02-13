@@ -150,7 +150,7 @@ public class TableRulesTypeEnum : ITableType {
                     string dicFieldTp = ConfigDicValue;
                     dicFieldTp = dicFieldTp.Replace("#ENUMSIGN#", enumSign);
                     dicFieldTp = dicFieldTp.Replace("#VALUESIGN#", tableClass.ValueSign);
-                    dicFieldTp = dicFieldTp.Replace("#VALUENAME#", tableClass.ValueName);
+                    dicFieldTp = dicFieldTp.Replace("#VALUENAME#", $"Localize.GetText(\"{LocalizeConst.TableCollectionName}.Enum.{enumSign}.{tableClass.ValueSign}\")");
                     addCount += 1;
                     dicFieldTp = dicFieldTp.Replace("#DOT#", addCount < dic.Value.Count ? ",\r\n" : "");
                     dicField += dicFieldTp;
@@ -208,7 +208,7 @@ private const string ConfigEnum =
     "\t\t/// <summary>\r\n" +
     "\t\t/// #SIGNNAME#\r\n" +
     "\t\t/// </summary>\r\n" +
-    "\t\tpublic enum #ENUMSIGN#Enum {\r\n" +
+    "\t\tpublic enum #ENUMSIGN# {\r\n" +
     "#ENUM#\r\n" +
     "\t\t}\r\n";
 
@@ -219,12 +219,12 @@ private const string ConfigEnumValue =
     "\t\t\t#VALUESIGN# = #VALUE##DOT#";
 
 private const string ConfigDic =
-    "\t\tpublic Dictionary<#ENUMSIGN#Enum, string> #ENUMSIGN#Dic = new() {\r\n" +
+    "\t\tpublic readonly Dictionary<#ENUMSIGN#, Func<string>> #ENUMSIGN#Dic = new() {\r\n" +
     "#DIC#\r\n" +
     "\t\t};\r\n";
 
 private const string ConfigDicValue =
-    "\t\t\t[#ENUMSIGN#Enum.#VALUESIGN#] = \"#VALUENAME#\"#DOT#";
+    "\t\t\t[#ENUMSIGN#.#VALUESIGN#] = () => #VALUENAME##DOT#";
 
 #endregion
 }

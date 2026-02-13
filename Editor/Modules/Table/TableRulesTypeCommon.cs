@@ -250,6 +250,7 @@ public class TableRulesTypeCommon : ITableType {
         string path = Asset.GetTxtPath(TableUtil.TableClassTpNormal, Asset.EnumPrefixPath.ScriptTemplates);
         fileContent = File.ReadAllText(path);
         keyReplaceDic.Add("#SCRIPTNAME#", tableRule.name);
+        keyReplaceDic.Add("#CLASSENDSIGN#", ClassEndSign);
         WriteTableClassField(tableDataDic);
         DealWithConfigDic();
         DealWithConfigMaxSingle(tableDataDic);
@@ -278,7 +279,13 @@ public class TableRulesTypeCommon : ITableType {
         int addCount = 0;
         foreach (var field in existList) {
             var fileType = field.enumField.ToString().ToLower();
-            string strField = string.Format($"public {fileType} {field.fieldName} {{{{ get; set; }}}}");
+            string strField;
+            if (field.isLocalize) {
+                var key = string.Format($"{LocalizeConst.TableCollectionName}.{tableRule.name.Replace("Table", "")}.{field.fieldName}.");
+                strField = string.Format($"public {fileType} {field.fieldName} => Localize.GetText(\"{key}\" + Id);");
+            }else {
+                strField = string.Format($"public {fileType} {field.fieldName} {{{{ get; set; }}}}");
+            }
             fieldContent += strField;
             addCount += 1;
             if (addCount < existList.Count) {
@@ -325,7 +332,7 @@ public class TableRulesTypeCommon : ITableType {
         var mainKeyFieldType = tableField.enumField;
         var key = mainKeyFieldType.ToString().ToLower();
         var fieldName = char.ToLower(tableField.fieldName[0]) + tableField.fieldName.Substring(1);
-        var value = tableRule.name + "Class";
+        var value = tableRule.name + ClassEndSign;
         // 字段
         string configDic = ConfigDicTp;
         configDic = configDic.Replace("#KEY#", key);
@@ -382,7 +389,7 @@ public class TableRulesTypeCommon : ITableType {
             }
         }
         var key = String.Format($"({strKey})");
-        var value = tableRule.name + "Class";
+        var value = tableRule.name + ClassEndSign;
         // 字段
         var configDic = ConfigDicTp;
         configDic = configDic.Replace("#KEY#", key);
@@ -423,7 +430,7 @@ public class TableRulesTypeCommon : ITableType {
         var strFieldKey = "";
         var strParam = "";
         var strError = "";
-        var value = tableRule.name + "Class";
+        var value = tableRule.name + ClassEndSign;
         for (int i = 0; i < nameList.Count; i++) {
             var isEnd = i == nameList.Count - 1;
             var fileName = StringUtil.ToLowerFirstChar(nameList[i]);
@@ -571,6 +578,10 @@ public class TableRulesTypeCommon : ITableType {
     private static string fileContent;
     private TableRules.TableRule tableRule;
     private readonly Dictionary<string, TableUtil.EnumFieldType> fieldDic = new();
+    /// <summary>
+    /// 类的尾部标识
+    /// </summary>
+    private const string ClassEndSign = "Field";
     /// <summary>
     /// 替换的字典
     /// </summary>
