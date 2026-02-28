@@ -251,7 +251,6 @@ namespace DCFrame {
 				return;
 			}
 			uiGameObject = Object.Instantiate(prefab, UIMgr.Instance.deActiveRoot);
-			await LocalizeMgr.LocalizePrefab(uiGameObject);
 		}
 
 		/// <summary>

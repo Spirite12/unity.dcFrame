@@ -19,16 +19,17 @@ namespace DCFrame {
                 Debug.LogError($"StringTable 未加载：{tableName}");
                 return key;
             }
-            var entry = stringTable.GetEntry(key);
+            var entryKey = GetTableCollectionKey(key);
+            var entry = stringTable.GetEntry(entryKey);
             if (entry == null) {
-                Debug.LogError($"{stringTable.TableCollectionName}:包内没有当前Key：{key}");
+                Debug.LogError($"{stringTable.TableCollectionName}:包内没有当前 Key：{entryKey}");
                 return key;
             }
             string result = entry.GetLocalizedString(args);
             if (result != null) {
                 return result;
             }
-            Debug.LogWarning($"{stringTable.TableCollectionName}：内没设置值，Key：{key}，语言是：{LocalizationSettings.SelectedLocale.Identifier.Code}");
+            Debug.LogWarning($"{stringTable.TableCollectionName}：内没设置值，Key：{entryKey}，语言是：{LocalizationSettings.SelectedLocale.Identifier.Code}");
             if (!allowFallback) {
                 return key;
             }
@@ -134,6 +135,13 @@ namespace DCFrame {
             return !key.Contains(".") ? key : key.Split(".")[0];
         }
         
+        /// <summary>
+        /// 获取表收集的Key
+        /// </summary>
+        private static string GetTableCollectionKey(string key) {
+            var tableName = GetTableCollectionName(key);
+            return key.Contains(".") ? key[(tableName.Length + 1)..] : key;
+        }
     }
 }
 

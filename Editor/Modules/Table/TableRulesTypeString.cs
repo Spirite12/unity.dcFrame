@@ -33,7 +33,10 @@ public class TableRulesTypeString : ITableType {
         tableList.Clear();
     }
 
-    public void OnInspectorGUI() {}
+    public void OnInspectorGUI() {
+        GUILayout.Space(10);
+        GUILayout.Label("Sign 的命名规范是：功能名.标识名，如：Main.Title");
+    }
 
 #region 创建脚本
 

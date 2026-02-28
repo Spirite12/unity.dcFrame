@@ -2,11 +2,6 @@ using System.Collections.Generic;
 
 namespace DCFrame {
     public class LocalizeConst {
-        
-        /// <summary>
-        /// 文本忽略标识
-        /// </summary>
-        public const string TxtIgnoreSign = "`";
         /// <summary>
         /// 正常字体库的key
         /// </summary>
@@ -33,7 +28,7 @@ namespace DCFrame {
         /// <summary>
         /// 枚举对应的本地化Code
         /// </summary>
-        private static readonly Dictionary<EnumLocaleCode, string> LocaleCodeDic = new() {
+        public static readonly Dictionary<EnumLocaleCode, string> LocaleCodeDic = new() {
             { EnumLocaleCode.ZhCN, "zh-CN" },
             { EnumLocaleCode.EN, "en" },
         };
