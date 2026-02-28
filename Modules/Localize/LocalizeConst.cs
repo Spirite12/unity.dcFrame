@@ -15,10 +15,6 @@ namespace DCFrame {
         /// 正常TMP字体库的key
         /// </summary>
         public const string KeyTMPTxtFontNormal = "";
-        /// <summary>
-        /// 表内的收集名称
-        /// </summary>
-        public const string TableCollectionName = "TableTable";
         
         /// <summary>
         /// 语言枚举表

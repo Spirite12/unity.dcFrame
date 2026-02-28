@@ -24,6 +24,10 @@ namespace DCFrame {
         /// </summary>
         public const string TableClassTpEnum = nameof(TableClassTpEnum);
         /// <summary>
+        /// 表类的模板文件
+        /// </summary>
+        public const string TableClassTpString = nameof(TableClassTpString);
+        /// <summary>
         /// 表数据路径
         /// </summary>
         public const string TableDataPath = "Assets/Game/Table";
@@ -42,6 +46,8 @@ namespace DCFrame {
             Const = 1,
             [Description("枚举表")]
             Enum = 2,
+            [Description("文本表")]
+            String = 3,
         }
         
         /// <summary>

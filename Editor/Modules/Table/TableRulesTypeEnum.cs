@@ -150,7 +150,7 @@ public class TableRulesTypeEnum : ITableType {
                     string dicFieldTp = ConfigDicValue;
                     dicFieldTp = dicFieldTp.Replace("#ENUMSIGN#", enumSign);
                     dicFieldTp = dicFieldTp.Replace("#VALUESIGN#", tableClass.ValueSign);
-                    dicFieldTp = dicFieldTp.Replace("#VALUENAME#", $"Localize.GetText(\"{LocalizeConst.TableCollectionName}.Enum.{enumSign}.{tableClass.ValueSign}\")");
+                    dicFieldTp = dicFieldTp.Replace("#VALUENAME#", $"Localize.GetText(\"{tableRule.name}.{enumSign}.{tableClass.ValueSign}\")");
                     addCount += 1;
                     dicFieldTp = dicFieldTp.Replace("#DOT#", addCount < dic.Value.Count ? ",\r\n" : "");
                     dicField += dicFieldTp;

@@ -33,6 +33,7 @@ public class TableRulesTypeCommon : ITableType {
         AnalyzeTableDataGUI();
         EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
         TableFieldDataGUI();
+        TableOtherDataGUI();
         EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
         TableKeyDataGUI();
     }
@@ -100,6 +101,35 @@ public class TableRulesTypeCommon : ITableType {
                 GUILayout.Space(10);
                 fieldData.isMaxValue = EditorGUILayout.Toggle(fieldData.isMaxValue, GUILayout.Width(30));
             }
+            EditorGUILayout.EndHorizontal();
+        }
+    }
+
+    /// <summary>
+    /// 其他数据的渲染
+    /// </summary>
+    private void TableOtherDataGUI() {
+        var hasLocalize = false;
+        List<string> fileList = new List<string>();
+        foreach (var field in fieldDic) {
+            fileList.Add(field.Key);
+            if (!hasLocalize) {
+                var fieldData = tableRule.defaultData.fieldList.Find((x) => x.fieldName == field.Key);
+                if (fieldData.isLocalize) {
+                    hasLocalize = true;
+                }
+            }
+        }
+        if (hasLocalize) {
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("多语言的Key：", GUILayout.Width(80));
+            var idx = fileList.IndexOf(tableRule.defaultData.localizeKey);
+            if (idx < 0) {
+                idx = 0;
+            }
+            var selectIdx = EditorGUILayout.Popup("", idx, fileList.ToArray(), GUILayout.Width(60));
+            tableRule.defaultData.localizeKey = fileList[selectIdx];
             EditorGUILayout.EndHorizontal();
         }
     }
@@ -281,8 +311,8 @@ public class TableRulesTypeCommon : ITableType {
             var fileType = field.enumField.ToString().ToLower();
             string strField;
             if (field.isLocalize) {
-                var key = string.Format($"{LocalizeConst.TableCollectionName}.{tableRule.name.Replace("Table", "")}.{field.fieldName}.");
-                strField = string.Format($"public {fileType} {field.fieldName} => Localize.GetText(\"{key}\" + Id);");
+                var key = string.Format($"{tableRule.name}.{field.fieldName}.");
+                strField = string.Format($"public {fileType} {field.fieldName} => Localize.GetText(\"{key}\" + {tableRule.defaultData.localizeKey});");
             }else {
                 strField = string.Format($"public {fileType} {field.fieldName} {{{{ get; set; }}}}");
             }

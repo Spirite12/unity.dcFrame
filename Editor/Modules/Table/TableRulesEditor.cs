@@ -78,6 +78,9 @@ public class TableRulesEditor : Editor {
             case TableUtil.EnumTableType.Enum:
                 tableType = new TableRulesTypeEnum();
                 break;
+            case TableUtil.EnumTableType.String:
+                tableType = new TableRulesTypeString();
+                break;
             default:
                 tableType = null;
                 break;

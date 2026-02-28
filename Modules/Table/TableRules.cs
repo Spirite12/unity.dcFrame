@@ -44,6 +44,10 @@ namespace DCFrame {
             /// 字段数据
             /// </summary>
             public List<TableField> fieldList = new();
+            /// <summary>
+            /// 多语言的Key
+            /// </summary>
+            public string localizeKey = "";
         }
 
         [System.Serializable]
