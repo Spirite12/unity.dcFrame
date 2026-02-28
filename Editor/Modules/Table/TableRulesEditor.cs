@@ -130,10 +130,16 @@ public class TableRulesEditor : Editor {
     /// </summary>
     private void RenderTableToolkit() {
         GUILayout.Space(5);
+        EditorGUILayout.BeginHorizontal();
         if (GUILayout.Button("一键导表")) {
             EditorPrefs.SetInt("TableRulesEditor_SelectIndex", selectIndex);
             TableEditor.PackageConfig();
         }
+        if (GUILayout.Button("导当前表")) {
+            EditorPrefs.SetInt("TableRulesEditor_SelectIndex", selectIndex);
+            TableEditor.PackageConfig(tableRules.tableRuleList[selectIndex].name);
+        }
+        EditorGUILayout.EndHorizontal();
         
         GUILayout.Space(16);
         EditorGUILayout.BeginHorizontal();
