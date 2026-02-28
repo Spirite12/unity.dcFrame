@@ -3,15 +3,6 @@ using System.Collections.Generic;
 namespace DCFrame {
     public class LocalizeConst {
         /// <summary>
-        /// 正常字体库的key
-        /// </summary>
-        public const string KeyTxtFontNormal = "";
-        /// <summary>
-        /// 正常TMP字体库的key
-        /// </summary>
-        public const string KeyTMPTxtFontNormal = "";
-        
-        /// <summary>
         /// 语言枚举表
         /// </summary>
         public enum EnumLocaleCode {

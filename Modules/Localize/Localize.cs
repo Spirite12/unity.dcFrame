@@ -44,15 +44,21 @@ namespace DCFrame {
         /// <summary>
         /// 加载 预制体 本地化
         /// </summary>
-        public static async UniTask<GameObject> GetPrefab(string key) {
+        public static async UniTask<GameObject> GetPrefab(string key, string tableName = "Prefab.") {
+            if (tableName.Length > 0) {
+                key = tableName + key;
+            }
             var path = GetTableAssetPath(key);
             return await Asset.LoadAsset(path) as GameObject;
         }
         
         /// <summary>
-        /// 加载 贴图 本地化
+        /// 加载 精灵 本地化
         /// </summary>
-        public static async UniTask<Sprite> GetSprite(string key) {
+        public static async UniTask<Sprite> GetSprite(string key, string tableName = "Sprite.") {
+            if (tableName.Length > 0) {
+                key = tableName + key;
+            }
             var path = GetTableAssetPath(key);
             return await Asset.LoadAsset(path) as Sprite;
         }
@@ -60,7 +66,10 @@ namespace DCFrame {
         /// <summary>
         /// 加载 贴图 本地化
         /// </summary>
-        public static async UniTask<Texture> GetTexture(string key) {
+        public static async UniTask<Texture> GetTexture(string key, string tableName = "Texture.") {
+            if (tableName.Length > 0) {
+                key = tableName + key;
+            }
             var path = GetTableAssetPath(key);
             return await Asset.LoadAsset(path) as Texture;
         }
@@ -68,7 +77,10 @@ namespace DCFrame {
         /// <summary>
         /// 加载 音效 本地化
         /// </summary>
-        public static async UniTask<AudioClip> GetAudioClip(string key) {
+        public static async UniTask<AudioClip> GetAudioClip(string key, string tableName = "AudioClip.") {
+            if (tableName.Length > 0) {
+                key = tableName + key;
+            }
             var path = GetTableAssetPath(key);
             return await Asset.LoadAsset(path) as AudioClip;
         }
@@ -76,7 +88,10 @@ namespace DCFrame {
         /// <summary>
         /// 加载 字体 本地化
         /// </summary>
-        public static async UniTask<Font> GetFont(string key) {
+        public static async UniTask<Font> GetFont(string key, string tableName = "Font.") {
+            if (tableName.Length > 0) {
+                key = tableName + key;
+            }
             var path = GetTableAssetPath(key);
             return await Asset.LoadAsset(path) as Font;
         }
@@ -84,7 +99,10 @@ namespace DCFrame {
         /// <summary>
         /// 加载 TMP字体 本地化
         /// </summary>
-        public static async UniTask<TMP_FontAsset> GetTMPFont(string key) {
+        public static async UniTask<TMP_FontAsset> GetTMPFont(string key, string tableName = "TMPFont.") {
+            if (tableName.Length > 0) {
+                key = tableName + key;
+            }
             var path = GetTableAssetPath(key);
             return await Asset.LoadAsset(path) as TMP_FontAsset;
         }
@@ -92,7 +110,7 @@ namespace DCFrame {
         /// <summary>
         /// 获取资源表的GUID
         /// </summary>
-        private static string GetTableAssetPath(string key, Locale locale = null, bool allowFallback = true){
+        public static string GetTableAssetPath(string key, Locale locale = null, bool allowFallback = true){
             var tableName = GetTableCollectionName(key);
             var assetTable = LocalizationSettings.AssetDatabase.GetTable(tableName, locale);
             if (!assetTable) {
