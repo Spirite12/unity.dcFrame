@@ -20,6 +20,16 @@ namespace DCFrame.Utility {
             var locales = LocalizationSettings.AvailableLocales.Locales;
             return locales.Find(x => x.Identifier.Code == specific.LocaleId.Code);
         }
+        
+        /// <summary>
+        /// 清除表的所有数据
+        /// </summary>
+        public static void ClearCollection(StringTableCollection collection) {
+            collection.SharedData.Clear();
+            foreach (var table in collection.StringTables) {
+                table.Clear();
+            }
+        }
 
         /// <summary>
         /// 收集指定表内所有中文文本作为 Key 的缓存字典
@@ -53,11 +63,13 @@ namespace DCFrame.Utility {
                     if (table.LocaleIdentifier.Code == cnCode) {
                         continue;
                     }
-                    var value = table.GetEntry(entry.Key);
                     if (!result.ContainsKey(entry.Value)) {
                         result.Add(entry.Value, new Dictionary<string, string>());
                     }
-                    result[entry.Value].Add(table.LocaleIdentifier.Code, value.Value);
+                    var value = table.GetEntry(entry.Key);
+                    if (value != null) {
+                        result[entry.Value].Add(table.LocaleIdentifier.Code, value.Value);
+                    }
                 }
             }
             return result;

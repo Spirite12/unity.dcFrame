@@ -115,11 +115,8 @@ public class TableRulesTypeEnum : ITableType {
             return;
         }
         collection = LocalizeUtil.GetOrCreateCollection(tableRule.name);
-        AssetDatabase.StartAssetEditing();
         OnDealWithFile();
         OnDealWithLocalize();
-        AssetDatabase.StopAssetEditing();
-        AssetDatabase.SaveAssets();
     }
 
 #region 创建脚本
@@ -188,9 +185,7 @@ public class TableRulesTypeEnum : ITableType {
             return;
         }
         var cnDic = LocalizeUtil.GetCollectionCnDic(collection);
-        foreach (var table in collection.StringTables) {
-            table.Clear();
-        }
+        LocalizeUtil.ClearCollection(collection);
         var cnCode = LocalizeConst.LocaleCodeDic[LocalizeConst.EnumLocaleCode.ZhCN];
         foreach (var dic in tableDic) {
             if (dic.Value.tableTypeEnum is { isLocalize: true }) {
@@ -213,6 +208,7 @@ public class TableRulesTypeEnum : ITableType {
             }
         }
         EditorUtility.SetDirty(collection);
+        AssetDatabase.SaveAssets();
     }
 
 #endregion

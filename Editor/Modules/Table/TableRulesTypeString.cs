@@ -49,11 +49,8 @@ public class TableRulesTypeString : ITableType {
             return;
         }
         collection = LocalizeUtil.GetOrCreateCollection(tableRule.name);
-        AssetDatabase.StartAssetEditing();
         OnDealWithFile();
         OnDealWithLocalize();
-        AssetDatabase.StopAssetEditing();
-        AssetDatabase.SaveAssets();
     }
 
 #region 创建脚本
@@ -88,9 +85,7 @@ public class TableRulesTypeString : ITableType {
             return;
         }
         var cnDic = LocalizeUtil.GetCollectionCnDic(collection);
-        foreach (var table in collection.StringTables) {
-            table.Clear();
-        }
+        LocalizeUtil.ClearCollection(collection);
         var cnCode = LocalizeConst.LocaleCodeDic[LocalizeConst.EnumLocaleCode.ZhCN];
         foreach (var tableData in tableList) {
             var cnText = tableData.String;
@@ -108,6 +103,7 @@ public class TableRulesTypeString : ITableType {
             }
         }
         EditorUtility.SetDirty(collection);
+        AssetDatabase.SaveAssets();
     }
 
 #endregion

@@ -249,9 +249,7 @@ public class TableRulesTypeCommon : ITableType {
         AnalyzeyData();
         collection = LocalizeUtil.GetOrCreateCollection(tableRule.name);
         OnDealWithFile();
-        AssetDatabase.StartAssetEditing();
         OnDealWithLocalize();
-        AssetDatabase.StopAssetEditing();
     }
 
     private void AnalyzeyData() {
@@ -633,9 +631,7 @@ public class TableRulesTypeCommon : ITableType {
             return;
         }
         var cnDic = LocalizeUtil.GetCollectionCnDic(collection);
-        foreach (var table in collection.StringTables) {
-            table.Clear();
-        }
+        LocalizeUtil.ClearCollection(collection);
         var cnCode = LocalizeConst.LocaleCodeDic[LocalizeConst.EnumLocaleCode.ZhCN];
         foreach (var field in tableRule.defaultData.fieldList) {
             if (field.isLocalize && tableLocalizeDic.TryGetValue(field.fieldName, out var value1)) {
@@ -657,6 +653,7 @@ public class TableRulesTypeCommon : ITableType {
             }
         }
         EditorUtility.SetDirty(collection);
+        AssetDatabase.SaveAssets();
     }
 
 #endregion
