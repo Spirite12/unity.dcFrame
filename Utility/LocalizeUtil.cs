@@ -67,7 +67,7 @@ namespace DCFrame.Utility {
                         result.Add(entry.Value, new Dictionary<string, string>());
                     }
                     var value = table.GetEntry(entry.Key);
-                    if (value != null) {
+                    if (value != null && !result[entry.Value].ContainsKey(table.LocaleIdentifier.Code)) {
                         result[entry.Value].Add(table.LocaleIdentifier.Code, value.Value);
                     }
                 }

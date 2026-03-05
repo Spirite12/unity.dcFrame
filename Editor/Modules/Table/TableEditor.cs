@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEngine;
 
 public class TableEditor : Editor {
-    [MenuItem("Tools/资源项/导表")]
+    [MenuItem("Tools/资源项/一键导表")]
     public static void PackageConfig() {
         PackageConfig("");
     }
