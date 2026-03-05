@@ -9,6 +9,7 @@ using CsvHelper.Configuration;
 using DCFrame;
 using DCFrame.Utility;
 using UnityEditor;
+using UnityEditor.Localization;
 using UnityEngine;
 
 public class TableRulesTypeCommon : ITableType {
@@ -21,6 +22,8 @@ public class TableRulesTypeCommon : ITableType {
     public void Destroy() {
         fieldDic.Clear();
         popupDic.Clear();
+        tableDataDic.Clear();
+        tableLocalizeDic.Clear();
         fileContent = "";
     }
     
@@ -239,51 +242,69 @@ public class TableRulesTypeCommon : ITableType {
     
 #endregion
 
-#region 创建脚本
+    /// <summary>
+    /// 处理数据
+    /// </summary>
+    public void OnDealWithData() {
+        AnalyzeyData();
+        collection = LocalizeUtil.GetOrCreateCollection(tableRule.name);
+        OnDealWithFile();
+        AssetDatabase.StartAssetEditing();
+        OnDealWithLocalize();
+        AssetDatabase.StopAssetEditing();
+    }
 
-        /// <summary>
-        /// 分析并创建脚本
-        /// </summary>
-        public void AnalyzeAndCreateScripts() {
-            var filePath = TableUtil.GetFilePath(tableRule.name);
-            Dictionary<string, List<string>> tableDataDic = new Dictionary<string, List<string>>();
-            var config = new CsvConfiguration(CultureInfo.InvariantCulture);
-            using var reader = new StreamReader(filePath, Encoding.UTF8);
-            using var csv = new CsvReader(reader, config);
-            // 读取 CSV 并解析成动态对象
-            var records = csv.GetRecords<dynamic>();
-            // 提前判断最大值获取
-            var fieldDic = tableRule != null ? tableRule.defaultData.fieldList.FindAll((x)=> x.isMaxValue).ToDictionary((x)=>x.fieldName) : new Dictionary<string, TableRules.TableField>();
-            // 遍历所有行
-            foreach (var record in records) {
-                // 每行数据,只获取第一行数据
-                foreach (var kvp in (IDictionary<string, object>)record) {
-                    if (!tableDataDic.ContainsKey(kvp.Key)) {
-                        tableDataDic.Add(kvp.Key, new List<string>());
-                    }
-                    if (!fieldDic.ContainsKey(kvp.Key)) {
-                        continue;
-                    }
+    private void AnalyzeyData() {
+        var filePath = TableUtil.GetFilePath(tableRule.name);
+        var config = new CsvConfiguration(CultureInfo.InvariantCulture);
+        using var reader = new StreamReader(filePath, Encoding.UTF8);
+        using var csv = new CsvReader(reader, config);
+        // 读取 CSV 并解析成动态对象
+        var records = csv.GetRecords<dynamic>();
+        // 提前判断最大值获取
+        var fieldDicTp = tableRule != null ? tableRule.defaultData.fieldList.FindAll((x)=> x.isMaxValue).ToDictionary((x)=>x.fieldName) : new Dictionary<string, TableRules.TableField>();
+        // 提前判断本地化数据获取
+         var localizeKey = tableRule != null ? tableRule.defaultData.fieldList.FindAll((x)=> x.isLocalize).ToDictionary((x)=>x.fieldName) : new Dictionary<string, TableRules.TableField>();
+        // 遍历所有行
+        string rowId = "";
+        foreach (var record in records) {
+            // 每个字段数据,只获取第一行数据
+            foreach (var kvp in (IDictionary<string, object>)record) {
+                if (kvp.Key == "Id") {
+                    rowId = kvp.Value.ToString();
+                }
+                if (!tableDataDic.ContainsKey(kvp.Key)) {
+                    tableDataDic.Add(kvp.Key, new List<string>());
+                }
+                if (fieldDicTp.ContainsKey(kvp.Key)) {
                     tableDataDic[kvp.Key].Add(kvp.Value.ToString());
                 }
-                if (fieldDic.Count == 0) {
-                    break;
+                if (localizeKey.ContainsKey(kvp.Key)) {
+                    if (!tableLocalizeDic.ContainsKey(kvp.Key)) {
+                        tableLocalizeDic[kvp.Key] = new List<tableLocalizeValue>();
+                    }
+                    tableLocalizeDic[kvp.Key].Add(new tableLocalizeValue() {
+                        Id = rowId,
+                        Text = kvp.Value.ToString()
+                    });
                 }
             }
-            CreateTableScript(tableDataDic);
+            if (fieldDicTp.Count == 0 && localizeKey.Count == 0) {
+                break;
+            }
         }
+    }
 
-    /// <summary>
-    /// 创建脚本并写入数据
-    /// </summary>
-    private void CreateTableScript(Dictionary<string, List<string>> tableDataDic) {
+#region 创建脚本
+
+    public void OnDealWithFile() {
         string path = Asset.GetTxtPath(TableUtil.TableClassTpNormal, Asset.EnumPrefixPath.ScriptTemplates);
         fileContent = File.ReadAllText(path);
         keyReplaceDic.Add("#SCRIPTNAME#", tableRule.name);
         keyReplaceDic.Add("#CLASSENDSIGN#", ClassEndSign);
-        WriteTableClassField(tableDataDic);
+        WriteTableClassField();
         DealWithConfigDic();
-        DealWithConfigMaxSingle(tableDataDic);
+        DealWithConfigMaxSingle();
         var filePath = TableUtil.GetScriptPath(tableRule.name);
         DealWithCustomSave(filePath);
         foreach (var keyValue in keyReplaceDic) {
@@ -298,7 +319,7 @@ public class TableRulesTypeCommon : ITableType {
     /// 处理表的类字段
     /// </summary>
     /// <returns></returns>
-    private void WriteTableClassField(Dictionary<string, List<string>> tableDataDic) {
+    private void WriteTableClassField() {
         string fieldContent = "";
         var existList = new List<TableRules.TableField>();
         foreach (var field in tableRule.defaultData.fieldList) {
@@ -518,7 +539,7 @@ public class TableRulesTypeCommon : ITableType {
     #region ConfigMax
     
     // 生成最大值变量
-    private void DealWithConfigMaxSingle(Dictionary<string, List<string>> tableDataDic) {
+    private void DealWithConfigMaxSingle() {
         var strKey = "#CONFIGMAX#";
         var fieldList = tableRule.defaultData.fieldList.FindAll((x)=> x.isMaxValue);
         if (fieldList.Count == 0) {
@@ -574,7 +595,7 @@ public class TableRulesTypeCommon : ITableType {
     private void DealWithCustomSave(string filePath) {
         var strKey = "#CONFIGCUSTOM#";
         if (!File.Exists(filePath)) {
-            keyReplaceDic.Add(strKey, tableRule.name);
+            keyReplaceDic.Add(strKey, "");
             return;
         }
         var csFile = File.ReadAllText(filePath);
@@ -605,9 +626,52 @@ public class TableRulesTypeCommon : ITableType {
     
 #endregion
 
+#region 处理本地化数据
+
+    private void OnDealWithLocalize() {
+        if (!collection) {
+            return;
+        }
+        var cnDic = LocalizeUtil.GetCollectionCnDic(collection);
+        foreach (var table in collection.StringTables) {
+            table.Clear();
+        }
+        var cnCode = LocalizeConst.LocaleCodeDic[LocalizeConst.EnumLocaleCode.ZhCN];
+        foreach (var field in tableRule.defaultData.fieldList) {
+            if (field.isLocalize && tableLocalizeDic.TryGetValue(field.fieldName, out var value1)) {
+                foreach (var tableLocalize in value1) {
+                    var cnText = tableLocalize.Text;
+                    var key = string.Format($"{field.fieldName}.{tableLocalize.Id}");
+                    foreach (var table in collection.StringTables) {
+                        var localeCode = table.LocaleIdentifier.Code;
+                        string value = null;
+                        if (localeCode == cnCode) {
+                            // 中文直接用 Excel
+                            value = cnText;
+                        }else if (cnDic.TryGetValue(cnText, out var localeDic)) {
+                            localeDic.TryGetValue(localeCode, out value);
+                        }
+                        table.AddEntry(key, value ?? "");
+                    }
+                }
+            }
+        }
+        EditorUtility.SetDirty(collection);
+    }
+
+#endregion
+
     private static string fileContent;
     private TableRules.TableRule tableRule;
+    private StringTableCollection collection;
     private readonly Dictionary<string, TableUtil.EnumFieldType> fieldDic = new();
+    private readonly Dictionary<string, List<string>> tableDataDic = new();
+    private readonly Dictionary<string, List<tableLocalizeValue>> tableLocalizeDic = new();
+    private class tableLocalizeValue {
+        public string Id;
+        public string Text;
+    }
+    
     /// <summary>
     /// 类的尾部标识
     /// </summary>

@@ -13,6 +13,14 @@ namespace DCFrame.Utility {
 			if (string.IsNullOrEmpty(str)) return str;
 			return char.ToLower(str[0]) + str.Substring(1);
 		}
+		
+		/// <summary>
+		/// 首字母大写
+		/// </summary>
+		public static string ToUpFirstChar(string str) {
+			if (string.IsNullOrEmpty(str)) return str;
+			return char.ToUpper(str[0]) + str.Substring(1);
+		}
 
 		/// <summary>
 		/// 移除字符串中匹配的字符串之前的字符

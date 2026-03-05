@@ -34,25 +34,29 @@ public class TableRulesTypeConst : ITableType {
     }
 
     public void OnInspectorGUI() {}
-
-#region 创建脚本
-
+    
     /// <summary>
-    /// 创建并设置脚本
+    /// 处理数据
     /// </summary>
-    public void AnalyzeAndCreateScripts() {
+    public void OnDealWithData() {
         if (tableList.Count <= 0) {
             return;
         }
+        OnDealWithFile();
+    }
+
+#region 创建脚本
+
+    public void OnDealWithFile() {
         string path = Asset.GetTxtPath(TableUtil.TableClassTpConst, Asset.EnumPrefixPath.ScriptTemplates);
         fileContent = File.ReadAllText(path);
         fileContent = fileContent.Replace("#SCRIPTNAME#", tableRule.name);
         var filePath = TableUtil.GetScriptPath(tableRule.name);
-        DealWithField();
+        OnDealWithFileField();
         File.WriteAllText(filePath, fileContent);
     }
 
-    private void DealWithField() {
+    private void OnDealWithFileField() {
         string configField = "";
         foreach (var tableData in tableList) {
             string configFieldTp = ConfigField;

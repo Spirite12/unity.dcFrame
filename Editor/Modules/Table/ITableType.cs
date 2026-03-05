@@ -14,7 +14,11 @@ public interface  ITableType {
     /// </summary>
     public abstract void OnInspectorGUI();
     /// <summary>
-    /// 分析并创建脚本代码
+    /// 统筹处理数据
     /// </summary>
-    public abstract void AnalyzeAndCreateScripts();
+    public abstract void OnDealWithData();
+    /// <summary>
+    /// 处理代码表数据
+    /// </summary>
+    public abstract void OnDealWithFile();
 }

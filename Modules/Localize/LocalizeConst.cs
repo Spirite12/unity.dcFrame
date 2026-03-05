@@ -2,6 +2,12 @@ using System.Collections.Generic;
 
 namespace DCFrame {
     public class LocalizeConst {
+
+        /// <summary>
+        /// 本地化的跟路径
+        /// </summary>
+        public const string LocalizeTableRootPath = "Assets/Game/Localize";
+        
         /// <summary>
         /// 语言枚举表
         /// </summary>

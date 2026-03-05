@@ -7,7 +7,9 @@ using System.Text;
 using CsvHelper;
 using CsvHelper.Configuration;
 using DCFrame;
+using DCFrame.Utility;
 using UnityEditor;
+using UnityEditor.Localization;
 using UnityEngine;
 
 public class TableRulesTypeEnum : ITableType {
@@ -20,9 +22,12 @@ public class TableRulesTypeEnum : ITableType {
             var tableList = csv.GetRecords<TableEnumClass>().ToList();
             foreach (var table in tableList) {
                 if (!tableDic.ContainsKey(table.EnumSign)) {
-                    tableDic[table.EnumSign] = new List<TableEnumClass>();
+                    tableDic[table.EnumSign] = new TableDicValue() {
+                        tableEnumList = new List<TableEnumClass>(),
+                        tableTypeEnum = tableRule.enumList.Find(x => x.sign == table.EnumSign),
+                    };
                 }
-                tableDic[table.EnumSign].Add(table);
+                tableDic[table.EnumSign].tableEnumList.Add(table);
             }
             return true;
         }
@@ -64,7 +69,7 @@ public class TableRulesTypeEnum : ITableType {
         // 是否本地化
         GUILayout.Space(10);
         var data = tableDic.ElementAt(selectIndex);
-        tableTypeEnum = tableRule.enumList.Find(x => x.sign == data.Key);
+        var tableTypeEnum = data.Value.tableTypeEnum;
         var isLocalize = tableTypeEnum is { isLocalize: true };
         var isToggle = EditorGUILayout.Toggle(isLocalize , GUILayout.Width(30));
         if (isToggle && !isLocalize) {
@@ -101,58 +106,69 @@ public class TableRulesTypeEnum : ITableType {
             Debug.LogError("查询枚举标识失败：" + findEnumSign);
         }
     }
-
-
-    #region 创建脚本
-
-    public void AnalyzeAndCreateScripts() {
+    
+    /// <summary>
+    /// 处理数据
+    /// </summary>
+    public void OnDealWithData() {
         if (tableDic.Count <= 0) {
             return;
         }
+        collection = LocalizeUtil.GetOrCreateCollection(tableRule.name);
+        AssetDatabase.StartAssetEditing();
+        OnDealWithFile();
+        OnDealWithLocalize();
+        AssetDatabase.StopAssetEditing();
+        AssetDatabase.SaveAssets();
+    }
+
+#region 创建脚本
+
+    public void OnDealWithFile() {
         string path = Asset.GetTxtPath(TableUtil.TableClassTpEnum, Asset.EnumPrefixPath.ScriptTemplates);
         fileContent = File.ReadAllText(path);
         fileContent = fileContent.Replace("#SCRIPTNAME#", tableRule.name);
         var filePath = TableUtil.GetScriptPath(tableRule.name);
-        DealWithField();
+        OnDealWithFileField();
         File.WriteAllText(filePath, fileContent);
     }
-    
-    private void DealWithField() {
+
+    private void OnDealWithFileField() {
         string contentInfo = "";
         foreach (var dic in tableDic) {
             // 处理枚举
             string enumInfo = ConfigEnum;
-            string enumSign = dic.Value[0].EnumSign.Replace("Enum", "");
-            enumInfo = enumInfo.Replace("#SIGNNAME#", dic.Value[0].EnumName);
+            var tableEnumList = dic.Value.tableEnumList;
+            string enumSign = tableEnumList[0].EnumSign.Replace("Enum", "");
+            enumInfo = enumInfo.Replace("#SIGNNAME#", tableEnumList[0].EnumName);
             enumInfo = enumInfo.Replace("#ENUMSIGN#", enumSign);
             string enumField = "";
             var addCount = 0;
-            foreach (var tableClass in dic.Value) {
+            foreach (var tableClass in tableEnumList) {
                 string enumFieldTp = ConfigEnumValue;
                 enumFieldTp = enumFieldTp.Replace("#VALUENAME#", tableClass.ValueName);
                 enumFieldTp = enumFieldTp.Replace("#VALUESIGN#", tableClass.ValueSign);
                 enumFieldTp = enumFieldTp.Replace("#VALUE#", tableClass.Value);
                 addCount += 1;
-                enumFieldTp = enumFieldTp.Replace("#DOT#", addCount < dic.Value.Count ? ",\r\n" : "");
+                enumFieldTp = enumFieldTp.Replace("#DOT#", addCount < tableEnumList.Count ? ",\r\n" : "");
                 enumField += enumFieldTp;
             }
             enumInfo = enumInfo.Replace("#ENUM#", enumField);
             enumInfo += "\r\n";
             contentInfo += enumInfo;
             // 处理字典
-            tableTypeEnum = tableRule.enumList.Find(x => x.sign == dic.Key);
-            if (tableTypeEnum is { isLocalize: true }) {
+            if (dic.Value.tableTypeEnum is { isLocalize: true }) {
                 string dicInfo = ConfigDic;
                 dicInfo = dicInfo.Replace("#ENUMSIGN#", enumSign);
                 string dicField = "";
                 addCount = 0;
-                foreach (var tableClass in dic.Value) {
+                foreach (var tableClass in tableEnumList) {
                     string dicFieldTp = ConfigDicValue;
                     dicFieldTp = dicFieldTp.Replace("#ENUMSIGN#", enumSign);
                     dicFieldTp = dicFieldTp.Replace("#VALUESIGN#", tableClass.ValueSign);
                     dicFieldTp = dicFieldTp.Replace("#VALUENAME#", $"Localize.GetText(\"{tableRule.name}.{enumSign}.{tableClass.ValueSign}\")");
                     addCount += 1;
-                    dicFieldTp = dicFieldTp.Replace("#DOT#", addCount < dic.Value.Count ? ",\r\n" : "");
+                    dicFieldTp = dicFieldTp.Replace("#DOT#", addCount < tableEnumList.Count ? ",\r\n" : "");
                     dicField += dicFieldTp;
                 }
                 dicInfo = dicInfo.Replace("#DIC#", dicField);
@@ -163,15 +179,60 @@ public class TableRulesTypeEnum : ITableType {
         fileContent = fileContent.Replace("#CONFIGINFO#", contentInfo);
     }
 
-    #endregion
+#endregion
+
+#region 处理本地化数据
+
+    public void OnDealWithLocalize() {
+        if (!collection) {
+            return;
+        }
+        var cnDic = LocalizeUtil.GetCollectionCnDic(collection);
+        foreach (var table in collection.StringTables) {
+            table.Clear();
+        }
+        var cnCode = LocalizeConst.LocaleCodeDic[LocalizeConst.EnumLocaleCode.ZhCN];
+        foreach (var dic in tableDic) {
+            if (dic.Value.tableTypeEnum is { isLocalize: true }) {
+                foreach (var tableClass in dic.Value.tableEnumList) {
+                    var cnText = tableClass.ValueName;
+                    string enumSign = dic.Value.tableEnumList[0].EnumSign.Replace("Enum", "");
+                    var key = $"{enumSign}.{tableClass.ValueSign}";
+                    foreach (var table in collection.StringTables) {
+                        var localeCode = table.LocaleIdentifier.Code;
+                        string value = null;
+                        if (localeCode == cnCode) {
+                            // 中文直接用 Excel
+                            value = cnText;
+                        }else if (cnDic.TryGetValue(cnText, out var localeDic)) {
+                            localeDic.TryGetValue(localeCode, out value);
+                        }
+                        table.AddEntry(key, value ?? "");
+                    }
+                }
+            }
+        }
+        EditorUtility.SetDirty(collection);
+    }
+
+#endregion
     
     private int selectIndex;
     private string findEnumSign;
     private string fileContent;
-    private TableRules.TableTypeEnum tableTypeEnum;
     private TableRules.TableRule tableRule;
-    private readonly Dictionary<string, List<TableEnumClass>> tableDic = new();
+    private StringTableCollection collection;
+    private readonly Dictionary<string, TableDicValue> tableDic = new();
 
+
+    /// <summary>
+    /// 字典的key类型值
+    /// </summary>
+    private class TableDicValue {
+        public List<TableEnumClass> tableEnumList;
+        public TableRules.TableTypeEnum tableTypeEnum;
+    }
+    
     /// <summary>
     /// 枚举类
     /// </summary>

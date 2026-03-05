@@ -7,6 +7,9 @@ using System.Text;
 using CsvHelper;
 using CsvHelper.Configuration;
 using DCFrame;
+using DCFrame.Utility;
+using UnityEditor;
+using UnityEditor.Localization;
 using UnityEngine;
 
 public class TableRulesTypeString : ITableType {
@@ -37,25 +40,34 @@ public class TableRulesTypeString : ITableType {
         GUILayout.Space(10);
         GUILayout.Label("Sign 的命名规范是：功能名.标识名，如：Main.Title");
     }
-
-#region 创建脚本
-
+    
     /// <summary>
-    /// 创建并设置脚本
+    /// 处理数据
     /// </summary>
-    public void AnalyzeAndCreateScripts() {
+    public void OnDealWithData() {
         if (tableList.Count <= 0) {
             return;
         }
+        collection = LocalizeUtil.GetOrCreateCollection(tableRule.name);
+        AssetDatabase.StartAssetEditing();
+        OnDealWithFile();
+        OnDealWithLocalize();
+        AssetDatabase.StopAssetEditing();
+        AssetDatabase.SaveAssets();
+    }
+
+#region 创建脚本
+
+    public void OnDealWithFile() {
         string path = Asset.GetTxtPath(TableUtil.TableClassTpString, Asset.EnumPrefixPath.ScriptTemplates);
         fileContent = File.ReadAllText(path);
         fileContent = fileContent.Replace("#SCRIPTNAME#", tableRule.name);
         var filePath = TableUtil.GetScriptPath(tableRule.name);
-        DealWithField();
+        OnDealWithFileField();
         File.WriteAllText(filePath, fileContent);
     }
 
-    private void DealWithField() {
+    private void OnDealWithFileField() {
         string configField = "";
         foreach (var tableData in tableList) {
             string configFieldTp = ConfigField;
@@ -69,9 +81,41 @@ public class TableRulesTypeString : ITableType {
     
 #endregion
 
+#region 处理本地化数据
+
+    public void OnDealWithLocalize() {
+        if (!collection) {
+            return;
+        }
+        var cnDic = LocalizeUtil.GetCollectionCnDic(collection);
+        foreach (var table in collection.StringTables) {
+            table.Clear();
+        }
+        var cnCode = LocalizeConst.LocaleCodeDic[LocalizeConst.EnumLocaleCode.ZhCN];
+        foreach (var tableData in tableList) {
+            var cnText = tableData.String;
+            var key = $"{tableData.Sign}";
+            foreach (var table in collection.StringTables) {
+                var localeCode = table.LocaleIdentifier.Code;
+                string value = null;
+                if (localeCode == cnCode) {
+                    // 中文直接用 Excel
+                    value = cnText;
+                }else if (cnDic.TryGetValue(cnText, out var localeDic)) {
+                    localeDic.TryGetValue(localeCode, out value);
+                }
+                table.AddEntry(key, value ?? "");
+            }
+        }
+        EditorUtility.SetDirty(collection);
+    }
+
+#endregion
+
     private string fileContent;
     private TableRules.TableRule tableRule;
     private List<TableStringClass> tableList = new();
+    private StringTableCollection collection;
 
     /// <summary>
     /// 文本类

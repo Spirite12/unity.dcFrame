@@ -1,5 +1,5 @@
-using System.Linq;
 using Cysharp.Threading.Tasks;
+using DCFrame.Utility;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -33,7 +33,7 @@ namespace DCFrame {
             if (!allowFallback) {
                 return key;
             }
-            var localeTp = GetDefaultLocale();
+            var localeTp = LocalizeUtil.GetDefaultLocale();
             if (!localeTp) {
                 Debug.LogError($"找不到默认语言设置");
                 return key;
@@ -126,24 +126,12 @@ namespace DCFrame {
             if (!allowFallback) {
                 return "";
             }
-            var localeTp = GetDefaultLocale();
+            var localeTp = LocalizeUtil.GetDefaultLocale();
             if (!localeTp) {
                 Debug.LogError($"找不到默认语言设置");
                 return "";
             }
             return GetTableAssetPath(key, localeTp, false);
-        }
-        
-        /// <summary>
-        /// 获取默认的语言
-        /// </summary>
-        /// <returns></returns>
-        private static Locale GetDefaultLocale() {
-            var selectors = LocalizationSettings.Instance.GetStartupLocaleSelectors();
-            var specific = selectors.OfType<SpecificLocaleSelector>().FirstOrDefault();
-            if (specific == null) return null;
-            var locales = LocalizationSettings.AvailableLocales.Locales;
-            return locales.Find(x => x.Identifier.Code == specific.LocaleId.Code);
         }
         
         /// <summary>
