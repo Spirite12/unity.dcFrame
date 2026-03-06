@@ -30,6 +30,16 @@ namespace DCFrame.Utility {
                 table.Clear();
             }
         }
+        
+        /// <summary>
+        /// 清除表的所有数据
+        /// </summary>
+        public static void ClearCollection(AssetTableCollection collection) {
+            collection.SharedData.Clear();
+            foreach (var table in collection.AssetTables) {
+                table.Clear();
+            }
+        }
 
         /// <summary>
         /// 收集指定表内所有中文文本作为 Key 的缓存字典
@@ -80,14 +90,14 @@ namespace DCFrame.Utility {
         /// </summary>
         /// <param name="tableName"></param>
         /// <returns></returns>
-        public static StringTableCollection GetOrCreateCollection(string tableName) {
+        public static StringTableCollection GetOrCreateStringCollection(string tableName) {
             var collection = LocalizationEditorSettings.GetStringTableCollection(tableName);
             if (collection) {
                 return collection;
             }
             // 创建 Collection
-            var rootPath = LocalizeConst.LocalizeTableRootPath + "/Text";
-            collection = LocalizationEditorSettings.CreateStringTableCollection(tableName, rootPath + "/Collection");
+            var rootPath = LocalizeConst.LocalizeTableRootPath + "/" + LocalizeConst.LocalizeStringTableName;
+            collection = LocalizationEditorSettings.CreateStringTableCollection(tableName, rootPath + "/" + LocalizeConst.LocalizeCollectionTableName);
             if (!collection) {
                 Debug.LogError($"创建 Localization 表失败: {tableName}");
                 return null;

@@ -1,4 +1,6 @@
+using System.IO;
 using DCFrame;
+using DCFrame.Utility;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Localization.Components;
@@ -7,8 +9,87 @@ using UnityEditor.Localization;
 using UnityEngine.UI;
 using UnityEngine.Events;
 using UnityEngine.Localization.Tables;
+using StringUtil = DCFrame.Utility.StringUtil;
 
 public class LocalizeEditor : Editor {
+    [MenuItem("Tools/资源项/本地化资源生成")]
+    public static void CreateLocalizeAsset() {
+        if (!Directory.Exists(LocalizeConst.LocalizeTableRootPath)) {
+            Debug.LogError($"目录不存在: {LocalizeConst.LocalizeTableRootPath}");
+            return;
+        }
+        AssetDatabase.StartAssetEditing();
+        var tableFolders = Directory.GetDirectories(LocalizeConst.LocalizeTableRootPath);
+        int totalFiles = tableFolders.Length;
+        int currentIndex = 0;
+        try {
+            foreach (var tableFolder in tableFolders) {
+                string tableName = Path.GetFileName(tableFolder);
+                if (tableName == LocalizeConst.LocalizeStringTableName) {
+                    continue;
+                }
+                // 进度条显示
+                float progress = (float)currentIndex / totalFiles;
+                EditorUtility.DisplayProgressBar("分析配表数据", $"正在处理文件: {tableName} ({currentIndex}/{totalFiles})", progress);
+                // 获取或创建表数据
+                var collection = LocalizationEditorSettings.GetAssetTableCollection(tableName);
+                if (!collection) {
+                    collection = LocalizationEditorSettings.CreateAssetTableCollection(tableName, $"{tableFolder}/{LocalizeConst.LocalizeCollectionTableName}");
+                }else {
+                    LocalizeUtil.ClearCollection(collection);
+                }
+                var langFolders = Directory.GetDirectories(tableFolder);
+                foreach (var langFolder in langFolders) {
+                    // 遍历多语言文件夹
+                    string langName = Path.GetFileName(langFolder);
+                    if (langName == LocalizeConst.LocalizeCollectionTableName) {
+                        continue;
+                    }
+                    var locale = LocalizationEditorSettings.GetLocale(StringUtil.ToLowerFirstChar(langName));
+                    if (!locale) {
+                        Debug.LogWarning($"Locale 不存在: {langName}");
+                        continue;
+                    }
+                    
+                    var assetTable = collection.GetTable(locale.Identifier) as AssetTable;
+                    if (!assetTable) {
+                        // 创建多语言的localization表
+                        collection.AddNewTable(locale.Identifier);
+                        assetTable = collection.GetTable(locale.Identifier) as AssetTable;
+                    }
+                    // 移动资源
+                    string assetPath = AssetDatabase.GetAssetPath(assetTable);
+                    string newPath = $"{assetTable}/{tableName}_{langName}.asset";
+                    AssetDatabase.MoveAsset(assetPath, newPath);
+                    // 遍历资源
+                    var assets = Directory.GetFiles(langFolder);
+                    foreach (var file in assets) {
+                        if (file.EndsWith(".meta")) {
+                            continue;
+                        }
+                        string resName = Path.GetFileNameWithoutExtension(file);
+                        string key = $"{resName}";
+                        string assetPathTp = file.Replace(Application.dataPath, "Assets");
+                        var guid = AssetDatabase.GUIDFromAssetPath(assetPathTp);
+                        var entry = assetTable.GetEntry(key);
+                        if (entry == null) {
+                            assetTable.AddEntry(key, guid.ToString());
+                        }else {
+                            entry.Guid = guid.ToString();
+                        }
+                    }
+                }
+                EditorUtility.SetDirty(collection);
+            }
+        }finally {
+            EditorUtility.ClearProgressBar();
+            AssetDatabase.StopAssetEditing();
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log("执行成功");
+        }
+    }
+    
     #region 右键功能
 
     [MenuItem("CONTEXT/Text/Add Localize", false, 2000)]

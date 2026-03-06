@@ -114,7 +114,7 @@ public class TableRulesTypeEnum : ITableType {
         if (tableDic.Count <= 0) {
             return;
         }
-        collection = LocalizeUtil.GetOrCreateCollection(tableRule.name);
+        collection = LocalizeUtil.GetOrCreateStringCollection(tableRule.name);
         OnDealWithFile();
         OnDealWithLocalize();
     }

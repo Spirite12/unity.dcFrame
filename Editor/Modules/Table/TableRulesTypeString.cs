@@ -48,7 +48,7 @@ public class TableRulesTypeString : ITableType {
         if (tableList.Count <= 0) {
             return;
         }
-        collection = LocalizeUtil.GetOrCreateCollection(tableRule.name);
+        collection = LocalizeUtil.GetOrCreateStringCollection(tableRule.name);
         OnDealWithFile();
         OnDealWithLocalize();
     }

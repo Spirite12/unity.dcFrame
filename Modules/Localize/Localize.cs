@@ -117,12 +117,13 @@ namespace DCFrame {
                 Debug.LogError($"AssetTable 未加载：{tableName}");
                 return "";
             }
-            var entry = assetTable.GetEntry(key);
+            var entryKey = GetTableCollectionKey(key);
+            var entry = assetTable.GetEntry(entryKey);
             if (entry != null) {
                 var path = AssetDatabase.GUIDToAssetPath(entry.Guid);
                 return path;
             }
-            Debug.LogWarning($"{assetTable.TableCollectionName}:内没有当前，Key：{key}，语言是：{LocalizationSettings.SelectedLocale.Identifier.Code}");
+            Debug.LogWarning($"{assetTable.TableCollectionName}:内没有当前 Key：{entryKey}，语言是：{LocalizationSettings.SelectedLocale.Identifier.Code}");
             if (!allowFallback) {
                 return "";
             }

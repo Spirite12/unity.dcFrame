@@ -247,7 +247,7 @@ public class TableRulesTypeCommon : ITableType {
     /// </summary>
     public void OnDealWithData() {
         AnalyzeyData();
-        collection = LocalizeUtil.GetOrCreateCollection(tableRule.name);
+        collection = LocalizeUtil.GetOrCreateStringCollection(tableRule.name);
         OnDealWithFile();
         OnDealWithLocalize();
     }
