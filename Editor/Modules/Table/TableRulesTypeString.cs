@@ -48,7 +48,7 @@ public class TableRulesTypeString : ITableType {
         if (tableList.Count <= 0) {
             return;
         }
-        collection = LocalizeUtil.GetOrCreateStringCollection(tableRule.name);
+        collection = LocalizeUtilEditor.GetOrCreateStringCollection(tableRule.name);
         OnDealWithFile();
         OnDealWithLocalize();
     }
@@ -84,8 +84,8 @@ public class TableRulesTypeString : ITableType {
         if (!collection) {
             return;
         }
-        var cnDic = LocalizeUtil.GetCollectionCnDic(collection);
-        LocalizeUtil.ClearCollection(collection);
+        var cnDic = LocalizeUtilEditor.GetCollectionCnDic(collection);
+        LocalizeUtilEditor.ClearCollection(collection);
         var cnCode = LocalizeConst.LocaleCodeDic[LocalizeConst.EnumLocaleCode.ZhCN];
         foreach (var tableData in tableList) {
             var cnText = tableData.String;

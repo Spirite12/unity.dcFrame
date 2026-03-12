@@ -114,7 +114,7 @@ public class TableRulesTypeEnum : ITableType {
         if (tableDic.Count <= 0) {
             return;
         }
-        collection = LocalizeUtil.GetOrCreateStringCollection(tableRule.name);
+        collection = LocalizeUtilEditor.GetOrCreateStringCollection(tableRule.name);
         OnDealWithFile();
         OnDealWithLocalize();
     }
@@ -184,8 +184,8 @@ public class TableRulesTypeEnum : ITableType {
         if (!collection) {
             return;
         }
-        var cnDic = LocalizeUtil.GetCollectionCnDic(collection);
-        LocalizeUtil.ClearCollection(collection);
+        var cnDic = LocalizeUtilEditor.GetCollectionCnDic(collection);
+        LocalizeUtilEditor.ClearCollection(collection);
         var cnCode = LocalizeConst.LocaleCodeDic[LocalizeConst.EnumLocaleCode.ZhCN];
         foreach (var dic in tableDic) {
             if (dic.Value.tableTypeEnum is { isLocalize: true }) {

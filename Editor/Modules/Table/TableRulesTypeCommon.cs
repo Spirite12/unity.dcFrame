@@ -247,7 +247,7 @@ public class TableRulesTypeCommon : ITableType {
     /// </summary>
     public void OnDealWithData() {
         AnalyzeyData();
-        collection = LocalizeUtil.GetOrCreateStringCollection(tableRule.name);
+        collection = LocalizeUtilEditor.GetOrCreateStringCollection(tableRule.name);
         OnDealWithFile();
         OnDealWithLocalize();
     }
@@ -630,8 +630,8 @@ public class TableRulesTypeCommon : ITableType {
         if (!collection) {
             return;
         }
-        var cnDic = LocalizeUtil.GetCollectionCnDic(collection);
-        LocalizeUtil.ClearCollection(collection);
+        var cnDic = LocalizeUtilEditor.GetCollectionCnDic(collection);
+        LocalizeUtilEditor.ClearCollection(collection);
         var cnCode = LocalizeConst.LocaleCodeDic[LocalizeConst.EnumLocaleCode.ZhCN];
         foreach (var field in tableRule.defaultData.fieldList) {
             if (field.isLocalize && tableLocalizeDic.TryGetValue(field.fieldName, out var value1)) {

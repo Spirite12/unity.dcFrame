@@ -36,7 +36,7 @@ public class LocalizeEditor : Editor {
                 if (!collection) {
                     collection = LocalizationEditorSettings.CreateAssetTableCollection(tableName, $"{tableFolder}/{LocalizeConst.LocalizeCollectionTableName}");
                 }else {
-                    LocalizeUtil.ClearCollection(collection);
+                    LocalizeUtilEditor.ClearCollection(collection);
                 }
                 var langFolders = Directory.GetDirectories(tableFolder);
                 foreach (var langFolder in langFolders) {
