@@ -172,7 +172,7 @@ public class TableRulesEditor : Editor {
     private void OpenScriptFile() {
         var tableName = tableRules.tableRuleList[selectIndex].name;
         string filePath = TableUtil.GetScriptPath(tableName);
-        CommonUtil.OpenScript(filePath);
+        CommonUtilEditor.OpenScript(filePath);
     }
 
     /// <summary>
