@@ -40,7 +40,7 @@ public class LocalizeEditor : Editor {
                 }
                 var langFolders = Directory.GetDirectories(tableFolder);
                 foreach (var langFolder in langFolders) {
-                    // 遍历多语言文件夹
+                    // 遍历本地化文件夹
                     string langName = Path.GetFileName(langFolder);
                     if (langName == LocalizeConst.LocalizeCollectionTableName) {
                         continue;
@@ -53,7 +53,7 @@ public class LocalizeEditor : Editor {
                     
                     var assetTable = collection.GetTable(locale.Identifier) as AssetTable;
                     if (!assetTable) {
-                        // 创建多语言的localization表
+                        // 创建本地化的localization表
                         collection.AddNewTable(locale.Identifier);
                         assetTable = collection.GetTable(locale.Identifier) as AssetTable;
                     }

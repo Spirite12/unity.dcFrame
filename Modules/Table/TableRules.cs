@@ -33,7 +33,7 @@ namespace DCFrame {
             /// </summary>
             public string sign;
             /// <summary>
-            /// 是否多语言
+            /// 是否本地化
             /// </summary>
             public bool isLocalize = false;
         }
@@ -45,7 +45,7 @@ namespace DCFrame {
             /// </summary>
             public List<TableField> fieldList = new();
             /// <summary>
-            /// 多语言的Key
+            /// 本地化的Key
             /// </summary>
             public string localizeKey = "";
         }
@@ -61,7 +61,7 @@ namespace DCFrame {
             /// </summary>
             public TableUtil.EnumFieldType enumField = TableUtil.EnumFieldType.Int;
             /// <summary>
-            /// 是否多语言
+            /// 是否本地化
             /// </summary>
             public bool isLocalize = false;
             /// <summary>

@@ -126,7 +126,7 @@ public class TableRulesTypeCommon : ITableType {
         if (hasLocalize) {
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("多语言的Key：", GUILayout.Width(80));
+            EditorGUILayout.LabelField("本地化的Key：", GUILayout.Width(80));
             var idx = fileList.IndexOf(tableRule.defaultData.localizeKey);
             if (idx < 0) {
                 idx = 0;
