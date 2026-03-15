@@ -1,6 +1,8 @@
-using System;
-using System.IO;
 using DCFrame;
+using NUnit.Framework;
+using System;
+using System.Collections.Generic;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -27,6 +29,7 @@ public class TableEditor : Editor {
         }
         int totalFiles = files.Length;
         int currentIndex = 0;
+        string strNoneConfig = "";
         try {
             foreach (var file in files) {
                 currentIndex++;
@@ -41,6 +44,10 @@ public class TableEditor : Editor {
                     continue;
                 }
                 tableRule = tableRules.tableRuleList.Find((x) => x.name == fileName);
+                if (tableRule == null){
+                    strNoneConfig += fileName + " ,";
+                    continue;
+                }
                 ITableType tableType = tableRule.enumTableType switch {
                     TableUtil.EnumTableType.Default => new TableRulesTypeCommon(),
                     TableUtil.EnumTableType.Const => new TableRulesTypeConst(),
@@ -58,6 +65,9 @@ public class TableEditor : Editor {
         }
         finally {
             EditorUtility.ClearProgressBar();
+            if (strNoneConfig.Length > 0){
+                Debug.LogWarning($"以下表没有找到相对应的配置数据：\n<color=#FF0000>{strNoneConfig}</color>");
+            }
         }
     }
     
