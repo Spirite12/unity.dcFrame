@@ -17,6 +17,9 @@ public class TableRulesEditor : Editor {
             tableRules.tableRuleList.Sort((x, y) => string.Compare(x.name, y.name, StringComparison.OrdinalIgnoreCase));
         }
         selectIndex = EditorPrefs.GetInt("TableRulesEditor_SelectIndex");
+        if (selectIndex < 0) {
+            selectIndex = 0;
+        }
     }
 
     private void OnDisable() {
