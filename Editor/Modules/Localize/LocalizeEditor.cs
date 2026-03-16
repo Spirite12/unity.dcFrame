@@ -126,6 +126,10 @@ public class LocalizeEditor : Editor {
         if (!table) {
             var tableRule = AssetDatabase.LoadAssetAtPath<TableRules>(Asset.GetAssetPath("Table/TableRules", Asset.EnumPrefixPath.Settings));
             var config = tableRule.tableRuleList.Find(x => x.enumTableType == TableUtil.EnumTableType.String);
+            if (config == null) {
+                Debug.LogWarning("请先创建文本表");
+                return null;
+            }
             tableName = config.name;
             table = LocalizationEditorSettings.GetStringTableCollection(tableName);
             entryKey = currentText;
