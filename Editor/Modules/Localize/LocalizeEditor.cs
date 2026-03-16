@@ -98,7 +98,85 @@ public class LocalizeEditor : Editor {
         SetupForLocalization(target);
     }
     
-    private static MonoBehaviour SetupForLocalization(Text target) {
+    [MenuItem("CONTEXT/Image/Add Localize", false, 2000)]
+    static void LocalizeUIImage(MenuCommand command) {
+        var target = command.context as Image;
+        SetupForLocalization(target);
+    }
+    
+    [MenuItem("CONTEXT/RawImage/Add Localize", false, 2000)]
+    static void LocalizeUIRawImage(MenuCommand command) {
+        var target = command.context as RawImage;
+        SetupForLocalization(target);
+    }
+
+    private static void SetupForLocalization(Image target) {
+        // 存在组件则删除
+        var oldComp = target.GetComponent<LocalizeSpriteEvent>();
+        if (oldComp) {
+            Undo.DestroyObjectImmediate(oldComp);
+        }
+        // 添加组件
+        var comp = Undo.AddComponent(target.gameObject, typeof(LocalizeSpriteEvent)) as LocalizeSpriteEvent;
+        if (!comp) {
+            return;
+        }
+        // 设置表
+        var tableName = Localize.AssetTableNameDic[typeof(Sprite)];
+        comp.AssetReference.TableReference = tableName;
+        // 绑定事件：Sprite → Image.sprite
+        var setTextureMethod = target.GetType().GetProperty("sprite")?.GetSetMethod();
+        if (setTextureMethod != null) {
+            var methodDelegate = System.Delegate.CreateDelegate(typeof(UnityAction<Sprite>), target, setTextureMethod) as UnityAction<Sprite>;
+            UnityEditor.Events.UnityEventTools.AddPersistentListener(comp.OnUpdateAsset, methodDelegate);
+        }
+        comp.OnUpdateAsset.SetPersistentListenerState(0, UnityEventCallState.EditorAndRuntime);
+        var sprite = target.sprite;
+        if (!sprite) return;
+        var key = sprite.name;
+        // 查找 Localization 表
+        var table = LocalizationEditorSettings.GetAssetTableCollection(tableName);
+        if (!table) return;
+        var sharedData = table.SharedData;
+        var entry = sharedData.GetEntry(key);
+        if (entry == null) return;
+        comp.AssetReference.TableEntryReference = key;
+    }
+    
+    private static void SetupForLocalization(RawImage target) {
+        // 存在组件则删除
+        var oldComp = target.GetComponent<LocalizeTextureEvent>();
+        if (oldComp) {
+            Undo.DestroyObjectImmediate(oldComp);
+        }
+        // 添加组件
+        var comp = Undo.AddComponent(target.gameObject, typeof(LocalizeTextureEvent)) as LocalizeTextureEvent;
+        if (!comp) {
+            return;
+        }
+        // 设置表
+        var tableName = Localize.AssetTableNameDic[typeof(RawImage)];
+        comp.AssetReference.TableReference = tableName;
+        // 绑定事件：Sprite → Image.sprite
+        var setTextureMethod = target.GetType().GetProperty("texture")?.GetSetMethod();
+        if (setTextureMethod != null) {
+            var methodDelegate = System.Delegate.CreateDelegate(typeof(UnityAction<Texture>), target, setTextureMethod) as UnityAction<Texture>;
+            UnityEditor.Events.UnityEventTools.AddPersistentListener(comp.OnUpdateAsset, methodDelegate);
+        }
+        comp.OnUpdateAsset.SetPersistentListenerState(0, UnityEventCallState.EditorAndRuntime);
+        var rawImage = target.texture;
+        if (!rawImage) return;
+        var key = rawImage.name;
+        // 查找 Localization 表
+        var table = LocalizationEditorSettings.GetAssetTableCollection(tableName);
+        if (!table) return;
+        var sharedData = table.SharedData;
+        var entry = sharedData.GetEntry(key);
+        if (entry == null) return;
+        comp.AssetReference.TableEntryReference = key;
+    }
+
+    private static void SetupForLocalization(Text target) {
         // 存在组件则删除
         var oldComp = target.GetComponent<LocalizeStringEvent>();
         if (oldComp) {
@@ -107,7 +185,7 @@ public class LocalizeEditor : Editor {
         // 添加组件
         var comp = Undo.AddComponent(target.gameObject, typeof(LocalizeStringEvent)) as LocalizeStringEvent;
         if (!comp) {
-            return null;
+            return;
         }
         var currentText = target.text;
         StringTableCollection table = null;
@@ -128,7 +206,7 @@ public class LocalizeEditor : Editor {
             var config = tableRule.tableRuleList.Find(x => x.enumTableType == TableUtil.EnumTableType.String);
             if (config == null) {
                 Debug.LogWarning("请先创建文本表");
-                return null;
+                return;
             }
             tableName = config.name;
             table = LocalizationEditorSettings.GetStringTableCollection(tableName);
@@ -167,7 +245,6 @@ public class LocalizeEditor : Editor {
             }
         }
         comp.OnUpdateString.Invoke(target.text);
-        return comp;
     }
     
     #endregion

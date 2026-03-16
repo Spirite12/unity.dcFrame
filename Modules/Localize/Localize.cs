@@ -6,6 +6,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine.Localization;
 using UnityEngine.Localization.Settings;
 using UnityEngine.ResourceManagement.AsyncOperations;
+using UnityEngine.UI;
 
 namespace DCFrame {
     public class Localize {
@@ -45,8 +46,9 @@ namespace DCFrame {
         /// <summary>
         /// 资源加载的映射
         /// </summary>
-        private static readonly Dictionary<System.Type, string> AssetTableNameDic = new() {
+        public static readonly Dictionary<System.Type, string> AssetTableNameDic = new() {
             { typeof(GameObject), "Prefab"},
+            { typeof(RawImage), "RawImage"},
             { typeof(Sprite), "Sprite" },
             { typeof(Texture), "Texture" },
             { typeof(AudioClip), "AudioClip" },
