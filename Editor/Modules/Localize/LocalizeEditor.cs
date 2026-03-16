@@ -109,31 +109,48 @@ public class LocalizeEditor : Editor {
         if (!comp) {
             return null;
         }
-        // 赋值
-        var tableRule = AssetDatabase.LoadAssetAtPath<TableRules>(Asset.GetAssetPath("Table/TableRules", Asset.EnumPrefixPath.Settings));
-        var config = tableRule.tableRuleList.Find((x)=> x.enumTableType == TableUtil.EnumTableType.String);
-        comp.StringReference.TableReference = config.name;
+        var currentText = target.text;
+        StringTableCollection table = null;
+        string entryKey = null;
+        string tableName = null;
+
+        // 查找 table 数据
+        var split = currentText.Split('.');
+        if (split.Length > 1) {
+            tableName = split[0];
+            table = LocalizationEditorSettings.GetStringTableCollection(tableName);
+            if (table) {
+                entryKey = LocalizeUtil.GetTableCollectionKey(currentText);
+            }
+        }
+        if (!table) {
+            var tableRule = AssetDatabase.LoadAssetAtPath<TableRules>(Asset.GetAssetPath("Table/TableRules", Asset.EnumPrefixPath.Settings));
+            var config = tableRule.tableRuleList.Find(x => x.enumTableType == TableUtil.EnumTableType.String);
+            tableName = config.name;
+            table = LocalizationEditorSettings.GetStringTableCollection(tableName);
+            entryKey = currentText;
+        }
+        comp.StringReference.TableReference = tableName;
+
         // 绑定事件
         var setStringMethod = target.GetType().GetProperty("text")?.GetSetMethod();
         if (setStringMethod != null) {
-            var methodDelegate = System.Delegate.CreateDelegate(
-                typeof(UnityAction<string>),
-                target,
-                setStringMethod
-            ) as UnityAction<string>;
+            var methodDelegate = System.Delegate.CreateDelegate(typeof(UnityAction<string>), target, setStringMethod) as UnityAction<string>;
             UnityEditor.Events.UnityEventTools.AddPersistentListener(comp.OnUpdateString, methodDelegate);
         }
         comp.OnUpdateString.SetPersistentListenerState(0, UnityEventCallState.EditorAndRuntime);
-        comp.OnUpdateString.Invoke(target.text);
-        // 读取文本是否存在Key
-        var table = LocalizationEditorSettings.GetStringTableCollection(config.name);
-        if (table) {
-            var currentText = target.text;
+
+        // 设置并赋值
+        if (table && !string.IsNullOrEmpty(entryKey)) {
             var sharedData = table.SharedData;
-            var entry = sharedData.GetEntry(currentText);
+            var entry = sharedData.GetEntry(entryKey);
+
             if (entry != null) {
-                comp.StringReference.TableEntryReference = currentText;
-                var chineseLocale = LocalizationSettings.AvailableLocales.GetLocale(LocalizeConst.LocaleCodeDic[LocalizeConst.EnumLocaleCode.ZhCN]);
+                comp.StringReference.TableEntryReference = entryKey;
+
+                var chineseLocale = LocalizationSettings.AvailableLocales.GetLocale(
+                    LocalizeConst.LocaleCodeDic[LocalizeConst.EnumLocaleCode.ZhCN]);
+
                 if (chineseLocale) {
                     var chineseTable = table.GetTable(chineseLocale.Identifier) as StringTable;
                     if (chineseTable) {
@@ -145,6 +162,7 @@ public class LocalizeEditor : Editor {
                 }
             }
         }
+        comp.OnUpdateString.Invoke(target.text);
         return comp;
     }
     
