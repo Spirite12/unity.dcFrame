@@ -29,7 +29,8 @@ namespace DCFrame {
         public enum EnumPrefixPath {
             Single = 0,
             Game = 1,
-            Settings = 2
+            Settings = 2,
+            ScriptTemplates = 3,
         }
         
         /// <summary>
@@ -39,6 +40,7 @@ namespace DCFrame {
             { EnumPrefixPath.Single, "Assets/Simple/"},
             { EnumPrefixPath.Game, "Assets/Game/Prefabs/"},
             { EnumPrefixPath.Settings, "Assets/Game/Settings/"},
+            { EnumPrefixPath.ScriptTemplates, "Tools/ScriptTemplates/"}
         };
         
         /// <summary>
@@ -73,6 +75,17 @@ namespace DCFrame {
             }
             return Path.Combine(prefixPath, $"{path}.prefab");;
         }
+        
+        /// <summary>
+        /// 获取资源加载地址
+        /// </summary>
+        public static string GetAssetPath(string path, EnumPrefixPath enumPrefix = EnumPrefixPath.Game) {
+            if (!PrefixPathDic.TryGetValue(enumPrefix, out string prefixPath)) {
+                ErrorPrefixPathTips(enumPrefix);
+                return "";
+            }
+            return Path.Combine(prefixPath, $"{path}.asset");;
+        }
 
         private static void ErrorPrefixPathTips(EnumPrefixPath enumPrefix) {
             Debug.LogError($"暂未支持当前前缀枚举： {enumPrefix}");
@@ -89,10 +102,24 @@ namespace DCFrame {
             { ".png", LoadAssetSprite },
             { ".txt", LoadAssetTxt },
             { ".prefab", LoadAssetPrefab },
+            { ".asset", LoadAssetAsset },
         };
 
         /// <summary>
-        /// 下载 预制件 类型资源
+        /// 加载 类型 资源
+        /// </summary>
+        private static async UniTask<object> LoadAssetAsset(string address) {
+            var handle = Addressables.LoadAssetAsync<Asset>(address);
+            await handle.Task;
+            if (handle.Status != AsyncOperationStatus.Succeeded) {
+                Debug.LogError($"加载资源失败，地址是: {address}");
+                return null;
+            }
+            return handle.Result;
+        }
+
+        /// <summary>
+        /// 加载 预制件 类型资源
         /// </summary>
         private static async UniTask<object> LoadAssetPrefab(string address) {
             var handle = Addressables.LoadAssetAsync<GameObject>(address);
@@ -105,7 +132,7 @@ namespace DCFrame {
         }
 
         /// <summary>
-        /// 下载 文本 类型资源
+        /// 加载 文本 类型资源
         /// </summary>
         private static async UniTask<object> LoadAssetTxt(string address) {
             var handle = Addressables.LoadAssetAsync<TextAsset>(address);
