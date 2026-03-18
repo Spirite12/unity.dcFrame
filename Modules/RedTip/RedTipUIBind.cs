@@ -63,7 +63,7 @@ namespace DCFrame {
             if (redTipName == "") {
                 return;
             }
-            GameObject prefab = await Asset.LoadAsset(Asset.GetPrefabPath("Frame/RedTip")) as GameObject;
+            GameObject prefab = await Asset.LoadAsset<GameObject>(Asset.GetPrefabPath("Frame/RedTip"));
             var goNew = Instantiate(prefab, transform);
             redTipUI = goNew.GetComponent<RedTipUI>();
             redTipUI.RenderRedTipStatus(redTipName, redTipId);

@@ -242,15 +242,14 @@ namespace DCFrame {
 			}
 
 			var address = Asset.GetPrefabPath(AssetPath + "/" + AssetName);
-			var taskLoadPrefab = Asset.LoadAsset(address);
+			var taskLoadPrefab = Asset.LoadAsset<GameObject>(address);
 			var taskOnLoading = OnLoading();
 			var (prefabObj, _) = await UniTask.WhenAll(taskLoadPrefab, taskOnLoading.AsAsyncUnitUniTask());
-			var prefab = prefabObj as GameObject;
-			if (prefab == null) {
+			if (!prefabObj) {
 				Debug.LogError($"load failed: assetPath = {AssetPath}, assetName = {AssetName}");
 				return;
 			}
-			uiGameObject = Object.Instantiate(prefab, UIMgr.Instance.deActiveRoot);
+			uiGameObject = Object.Instantiate(prefabObj, UIMgr.Instance.deActiveRoot);
 		}
 
 		/// <summary>
