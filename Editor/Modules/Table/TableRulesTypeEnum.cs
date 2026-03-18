@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -122,7 +122,7 @@ public class TableRulesTypeEnum : ITableType {
 #region 创建脚本
 
     public void OnDealWithFile() {
-        string path = Asset.GetTxtPath(TableUtil.TableClassTpEnum, Asset.EnumPrefixPath.ScriptTemplates);
+        string path = Asset.GetTxtPath(TableUtil.TableClassTpEnum, Asset.PrefixPath.ScriptTemplates);
         fileContent = File.ReadAllText(path);
         fileContent = fileContent.Replace("#SCRIPTNAME#", tableRule.name);
         var filePath = TableUtil.GetScriptPath(tableRule.name);
@@ -186,7 +186,7 @@ public class TableRulesTypeEnum : ITableType {
         }
         var cnDic = LocalizeUtilEditor.GetCollectionCnDic(collection);
         LocalizeUtilEditor.ClearCollection(collection);
-        var cnCode = LocalizeConst.LocaleCodeDic[LocalizeConst.EnumLocaleCode.ZhCN];
+        var cnCode = LocalizeConst.LocaleCodeDic[LocalizeConst.LocaleCode.ZhCN];
         foreach (var dic in tableDic) {
             if (dic.Value.tableTypeEnum is { isLocalize: true }) {
                 foreach (var tableClass in dic.Value.tableEnumList) {

@@ -1,4 +1,4 @@
-using DCFrame;
+﻿using DCFrame;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,7 +12,7 @@ public class TableEditor : Editor {
     }
     
     public static void PackageConfig(string tableName) {
-        tableRules = AssetDatabase.LoadAssetAtPath<TableRules>(Asset.GetAssetPath("Table/TableRules", Asset.EnumPrefixPath.Settings));
+        tableRules = AssetDatabase.LoadAssetAtPath<TableRules>(Asset.GetAssetPath("Table/TableRules", Asset.PrefixPath.Settings));
         foreach (var rule in tableRules.tableRuleList) {
             tableRuleDic[rule.name] = rule;
         }
@@ -56,10 +56,10 @@ public class TableEditor : Editor {
                     continue;
                 }
                 ITableType tableType = tableRule.enumTableType switch {
-                    TableUtil.EnumTableType.Default => new TableRulesTypeCommon(),
-                    TableUtil.EnumTableType.Const => new TableRulesTypeConst(),
-                    TableUtil.EnumTableType.Enum => new TableRulesTypeEnum(),
-                    TableUtil.EnumTableType.String => new TableRulesTypeString(),
+                    TableUtil.TableType.Default => new TableRulesTypeCommon(),
+                    TableUtil.TableType.Const => new TableRulesTypeConst(),
+                    TableUtil.TableType.Enum => new TableRulesTypeEnum(),
+                    TableUtil.TableType.String => new TableRulesTypeString(),
                     _ => throw new ArgumentOutOfRangeException()
                 };
                 if (tableType.Init(tableRule)) {

@@ -68,7 +68,7 @@ namespace DCFrame {
         /// <summary>
         /// 本地记录类型
         /// </summary>
-        public CacheMgr.EnumSaveType saveType = CacheMgr.EnumSaveType.PlayerId;
+        public CacheMgr.SaveType saveType = CacheMgr.SaveType.PlayerId;
         
         private readonly string className;
         private static bool isInit = false;

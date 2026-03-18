@@ -12,6 +12,10 @@ namespace DCFrame {
                 Debug.LogError("屏蔽词库路径配置错误");
                 return;
             }
+            if (!File.Exists(FilterPath)) {
+                Debug.LogError($"屏蔽词库文件不存在: {FilterPath}");
+                return;
+            }
             var lines = File.ReadAllLines(FilterPath);
             foreach (var line in lines) {
                 AddWord(line);
@@ -22,6 +26,9 @@ namespace DCFrame {
         /// 添加屏蔽词
         /// </summary>
         public static void AddWord(string word) {
+            if (string.IsNullOrWhiteSpace(word)) {
+                return;
+            }
             TextTrieNode current = Root;
             foreach (char c in word) {
                 if (!current.Children.ContainsKey(c)) {
@@ -38,6 +45,9 @@ namespace DCFrame {
         /// 判断词是否存在
         /// </summary>
         public static bool ContainsWord(string word) {
+            if (string.IsNullOrWhiteSpace(word)) {
+                return false;
+            }
             TextTrieNode current = Root;
             foreach (char c in word) {
                 if (!current.Children.ContainsKey(c)) {
@@ -54,6 +64,9 @@ namespace DCFrame {
         /// 判断给定消息是否包含屏蔽词
         /// </summary>
         public static bool ContainsFilterWords(string message) {
+            if (string.IsNullOrEmpty(message)) {
+                return false;
+            }
             int index = 0;
             while (index < message.Length) {
                 int start = index;
@@ -76,6 +89,9 @@ namespace DCFrame {
         ///  将给定的消息其中的屏蔽词替换为 *
         /// </summary>
         public static string ReplaceFilterWords(string message) {
+            if (string.IsNullOrEmpty(message)) {
+                return message ?? string.Empty;
+            }
             int index = 0;
             StringBuilder sb = new StringBuilder();
             while (index < message.Length) {

@@ -1,11 +1,11 @@
-using DCFrame;
+﻿using DCFrame;
 using UnityEditor;
 using UnityEngine;
 
 [CustomEditor(typeof(LocalizeRules))]
 public class LocalizeRulesEditor : Editor {
     private void OnEnable() {
-        localizeRules = AssetDatabase.LoadAssetAtPath<LocalizeRules>(Asset.GetAssetPath("Localize/LocalizeRules", Asset.EnumPrefixPath.Settings));
+        localizeRules = AssetDatabase.LoadAssetAtPath<LocalizeRules>(Asset.GetAssetPath("Localize/LocalizeRules", Asset.PrefixPath.Settings));
     }
     
     public override void OnInspectorGUI() {

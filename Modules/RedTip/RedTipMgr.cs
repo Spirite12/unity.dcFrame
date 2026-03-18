@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCFrame {
@@ -97,14 +98,25 @@ namespace DCFrame {
         /// 从key里面获取名称
         /// </summary>
         public static string GetNameByKey(string key) {
-            return key.Split("_")[0];
+            int index = key.LastIndexOf("_", StringComparison.Ordinal);
+            if (index <= 0) {
+                return key;
+            }
+            return key.Substring(0, index);
         }
 
         /// <summary>
         /// 从key里面获取ID
         /// </summary>
         public static int GetIdByKey(string key) {
-            return int.Parse(key.Split("_")[1]);
+            int index = key.LastIndexOf("_", StringComparison.Ordinal);
+            if (index < 0 || index == key.Length - 1) {
+                return 0;
+            }
+            if (!int.TryParse(key.Substring(index + 1), out int id)) {
+                return 0;
+            }
+            return id;
         }
 
         /// <summary>

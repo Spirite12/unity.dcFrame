@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
@@ -39,7 +39,7 @@ namespace DCFrame {
         /// <summary>
         /// 表类型
         /// </summary>
-        public enum EnumTableType {
+        public enum TableType {
             [Description("默认表")]
             Default = 0,
             [Description("常量表")]
@@ -53,7 +53,7 @@ namespace DCFrame {
         /// <summary>
         /// 表key类型
         /// </summary>
-        public enum EnumKeyType {
+        public enum KeyType {
             [Description("无")]
             None = 0,
             [Description("单key")]
@@ -68,7 +68,7 @@ namespace DCFrame {
         /// 表字段数据
         /// 新增枚举需要处理：EnumFieldTypeParsers
         /// </summary>
-        public enum EnumFieldType {
+        public enum FieldType {
             Int = 0,
             Long = 1,
             Float = 2,
@@ -81,26 +81,26 @@ namespace DCFrame {
         /// 获取表字段数据转换
         /// </summary>
         /// <returns></returns>
-        public static EnumFieldType GetEnumFieldType(string s) {
-            if (string.IsNullOrWhiteSpace(s)) return EnumFieldType.String;
+        public static FieldType GetEnumFieldType(string s) {
+            if (string.IsNullOrWhiteSpace(s)) return FieldType.String;
             s = s.Trim();
 
-            if (bool.TryParse(s, out _)) return EnumFieldType.Bool;
-            if (int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out _)) return EnumFieldType.Int;
-            if (long.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out _)) return EnumFieldType.Long;
+            if (bool.TryParse(s, out _)) return FieldType.Bool;
+            if (int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out _)) return FieldType.Int;
+            if (long.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out _)) return FieldType.Long;
 
             // 浮点数 & 科学计数法处理
             if (decimal.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out decimal decVal)) {
                 // 判断是否可以安全转为 long（整数且在范围内）
                 if (decVal == Math.Floor(decVal)) {
-                    if (decVal is >= int.MinValue and <= int.MaxValue) return EnumFieldType.Int;
-                    if (decVal is >= long.MinValue and <= long.MaxValue) return EnumFieldType.Long;
+                    if (decVal is >= int.MinValue and <= int.MaxValue) return FieldType.Int;
+                    if (decVal is >= long.MinValue and <= long.MaxValue) return FieldType.Long;
                 }
-                if (StringUtil.CanBeFloat(decVal)) return EnumFieldType.Float;
-                if (StringUtil.CanBeDouble(decVal)) return EnumFieldType.Double;
+                if (StringUtil.CanBeFloat(decVal)) return FieldType.Float;
+                if (StringUtil.CanBeDouble(decVal)) return FieldType.Double;
             }
 
-            return EnumFieldType.String;
+            return FieldType.String;
         }
         
         /// <summary>

@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using DCFrame;
 using DCFrame.Utility;
 using UnityEditor;
@@ -202,8 +202,8 @@ public class LocalizeEditor : Editor {
             }
         }
         if (!table) {
-            var tableRule = AssetDatabase.LoadAssetAtPath<TableRules>(Asset.GetAssetPath("Table/TableRules", Asset.EnumPrefixPath.Settings));
-            var config = tableRule.tableRuleList.Find(x => x.enumTableType == TableUtil.EnumTableType.String);
+            var tableRule = AssetDatabase.LoadAssetAtPath<TableRules>(Asset.GetAssetPath("Table/TableRules", Asset.PrefixPath.Settings));
+            var config = tableRule.tableRuleList.Find(x => x.enumTableType == TableUtil.TableType.String);
             if (config == null) {
                 Debug.LogWarning("请先创建文本表");
                 return;
@@ -231,7 +231,7 @@ public class LocalizeEditor : Editor {
                 comp.StringReference.TableEntryReference = entryKey;
 
                 var chineseLocale = LocalizationSettings.AvailableLocales.GetLocale(
-                    LocalizeConst.LocaleCodeDic[LocalizeConst.EnumLocaleCode.ZhCN]);
+                    LocalizeConst.LocaleCodeDic[LocalizeConst.LocaleCode.ZhCN]);
 
                 if (chineseLocale) {
                     var chineseTable = table.GetTable(chineseLocale.Identifier) as StringTable;

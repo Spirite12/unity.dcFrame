@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -56,7 +56,7 @@ public class TableRulesTypeString : ITableType {
 #region 创建脚本
 
     public void OnDealWithFile() {
-        string path = Asset.GetTxtPath(TableUtil.TableClassTpString, Asset.EnumPrefixPath.ScriptTemplates);
+        string path = Asset.GetTxtPath(TableUtil.TableClassTpString, Asset.PrefixPath.ScriptTemplates);
         fileContent = File.ReadAllText(path);
         fileContent = fileContent.Replace("#SCRIPTNAME#", tableRule.name);
         var filePath = TableUtil.GetScriptPath(tableRule.name);
@@ -86,7 +86,7 @@ public class TableRulesTypeString : ITableType {
         }
         var cnDic = LocalizeUtilEditor.GetCollectionCnDic(collection);
         LocalizeUtilEditor.ClearCollection(collection);
-        var cnCode = LocalizeConst.LocaleCodeDic[LocalizeConst.EnumLocaleCode.ZhCN];
+        var cnCode = LocalizeConst.LocaleCodeDic[LocalizeConst.LocaleCode.ZhCN];
         foreach (var tableData in tableList) {
             var cnText = tableData.String;
             var key = $"{tableData.Sign}";

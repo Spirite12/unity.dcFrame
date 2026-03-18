@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -77,7 +77,7 @@ public class TableRulesTypeCommon : ITableType {
         EditorGUILayout.LabelField("本地化", GUILayout.Width(40));
         EditorGUILayout.LabelField("最大值", GUILayout.Width(40));
         EditorGUILayout.EndHorizontal();
-        List<string> fileList = new List<string>(Enum.GetNames(typeof(TableUtil.EnumFieldType)));
+        List<string> fileList = new List<string>(Enum.GetNames(typeof(TableUtil.FieldType)));
         foreach (var field in fieldDic) {
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField(field.Key, GUILayout.Width(70));
@@ -93,13 +93,13 @@ public class TableRulesTypeCommon : ITableType {
                 };
                 tableRule.defaultData.fieldList.Add(fieldData);
             }
-            enumFieldTp = (TableUtil.EnumFieldType)EditorGUILayout.Popup("",(int)enumFieldTp, fileList.ToArray(), GUILayout.Width(60));
+            enumFieldTp = (TableUtil.FieldType)EditorGUILayout.Popup("",(int)enumFieldTp, fileList.ToArray(), GUILayout.Width(60));
             fieldData.enumField = enumFieldTp;
             // 是否本地化
             GUILayout.Space(10);
             fieldData.isLocalize = EditorGUILayout.Toggle(fieldData.isLocalize, GUILayout.Width(30));
             // 最大值
-            var isHide = fieldData.enumField is TableUtil.EnumFieldType.Bool or TableUtil.EnumFieldType.String;
+            var isHide = fieldData.enumField is TableUtil.FieldType.Bool or TableUtil.FieldType.String;
             if (!isHide) {
                 GUILayout.Space(10);
                 fieldData.isMaxValue = EditorGUILayout.Toggle(fieldData.isMaxValue, GUILayout.Width(30));
@@ -150,7 +150,7 @@ public class TableRulesTypeCommon : ITableType {
         for (int i = 0; i < keyArray.Length; i++) {
             var fieldData = tableRule.defaultData.fieldList.Find((x) => x.fieldName == keyArray[i]);
             if (fieldData != null) {
-                if (fieldData.enumMainViceKey != TableUtil.EnumKeyType.None) {
+                if (fieldData.enumMainViceKey != TableUtil.KeyType.None) {
                     curCount += 1;
                     tableFieldList.Add(fieldData);
                 }else {
@@ -159,16 +159,16 @@ public class TableRulesTypeCommon : ITableType {
             }
         }
         // 显示列表数据
-        var typeList = CommonUtil.GetEnumDescriptions<TableUtil.EnumKeyType>();
+        var typeList = CommonUtil.GetEnumDescriptions<TableUtil.KeyType>();
         foreach (var field in tableFieldList) {
             EditorGUILayout.BeginVertical(GUI.skin.box);
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField(field.fieldName, GUILayout.Width(70));
-            field.enumMainViceKey = (TableUtil.EnumKeyType)EditorGUILayout.Popup("",(int)field.enumMainViceKey, typeList.ToArray(), GUILayout.Width(100));
-            if (field.enumMainViceKey is TableUtil.EnumKeyType.None or TableUtil.EnumKeyType.Single) {
+            field.enumMainViceKey = (TableUtil.KeyType)EditorGUILayout.Popup("",(int)field.enumMainViceKey, typeList.ToArray(), GUILayout.Width(100));
+            if (field.enumMainViceKey is TableUtil.KeyType.None or TableUtil.KeyType.Single) {
                 field.fieldKeyList.Clear();
                 EditorGUILayout.EndHorizontal();
-            }else if (field.enumMainViceKey is TableUtil.EnumKeyType.Multi or TableUtil.EnumKeyType.MultiWithList) {
+            }else if (field.enumMainViceKey is TableUtil.KeyType.Multi or TableUtil.KeyType.MultiWithList) {
                 List<string> viceList = new List<string> { "None" };
                 for (int i = 0; i < keyArray.Length; i++) {
                     if (keyArray[i] != field.fieldName && !field.fieldKeyList.Contains(keyArray[i])) {
@@ -223,7 +223,7 @@ public class TableRulesTypeCommon : ITableType {
             return;
         }
         popupDic["addKeyIndex"] = 0;
-        fieldData.enumMainViceKey = TableUtil.EnumKeyType.Single;
+        fieldData.enumMainViceKey = TableUtil.KeyType.Single;
         fieldData.fieldKeyList.Clear();
     }
     
@@ -296,7 +296,7 @@ public class TableRulesTypeCommon : ITableType {
 #region 创建脚本
 
     public void OnDealWithFile() {
-        string path = Asset.GetTxtPath(TableUtil.TableClassTpNormal, Asset.EnumPrefixPath.ScriptTemplates);
+        string path = Asset.GetTxtPath(TableUtil.TableClassTpNormal, Asset.PrefixPath.ScriptTemplates);
         fileContent = File.ReadAllText(path);
         keyReplaceDic.Add("#SCRIPTNAME#", tableRule.name);
         keyReplaceDic.Add("#CLASSENDSIGN#", ClassEndSign);
@@ -353,17 +353,17 @@ public class TableRulesTypeCommon : ITableType {
         bool hasReplace = false;
         foreach (var field in tableRule.defaultData.fieldList) {
             switch (field.enumMainViceKey) {
-                case TableUtil.EnumKeyType.None:
+                case TableUtil.KeyType.None:
                     break;
-                case TableUtil.EnumKeyType.Single:
+                case TableUtil.KeyType.Single:
                     DealWithConfigDicMain(field);
                     hasReplace = true;
                     break;
-                case TableUtil.EnumKeyType.Multi:
+                case TableUtil.KeyType.Multi:
                     DealWithConfigDicVice(field);
                     hasReplace = true;
                     break;
-                case TableUtil.EnumKeyType.MultiWithList:
+                case TableUtil.KeyType.MultiWithList:
                     DealWithConfigDicViceList(field);
                     hasReplace = true;
                     break;
@@ -547,7 +547,7 @@ public class TableRulesTypeCommon : ITableType {
         var configMax = "";
         var addCount = 0;
         foreach (var field in fieldList) {
-            if (field.enumField is TableUtil.EnumFieldType.Bool or TableUtil.EnumFieldType.String) {
+            if (field.enumField is TableUtil.FieldType.Bool or TableUtil.FieldType.String) {
                 continue;
             }
             var configMaxTp = ConfigMaxTp;
@@ -565,7 +565,7 @@ public class TableRulesTypeCommon : ITableType {
                 }
             }
             var strValue = maxValue.ToString(CultureInfo.InvariantCulture);
-            if (field.enumField == TableUtil.EnumFieldType.Float) {
+            if (field.enumField == TableUtil.FieldType.Float) {
                 strValue += "f";
             }
             configMaxTp = configMaxTp.Replace("#VALUE#", strValue);
@@ -632,7 +632,7 @@ public class TableRulesTypeCommon : ITableType {
         }
         var cnDic = LocalizeUtilEditor.GetCollectionCnDic(collection);
         LocalizeUtilEditor.ClearCollection(collection);
-        var cnCode = LocalizeConst.LocaleCodeDic[LocalizeConst.EnumLocaleCode.ZhCN];
+        var cnCode = LocalizeConst.LocaleCodeDic[LocalizeConst.LocaleCode.ZhCN];
         foreach (var field in tableRule.defaultData.fieldList) {
             if (field.isLocalize && tableLocalizeDic.TryGetValue(field.fieldName, out var value1)) {
                 foreach (var tableLocalize in value1) {
@@ -661,7 +661,7 @@ public class TableRulesTypeCommon : ITableType {
     private static string fileContent;
     private TableRules.TableRule tableRule;
     private StringTableCollection collection;
-    private readonly Dictionary<string, TableUtil.EnumFieldType> fieldDic = new();
+    private readonly Dictionary<string, TableUtil.FieldType> fieldDic = new();
     private readonly Dictionary<string, List<string>> tableDataDic = new();
     private readonly Dictionary<string, List<tableLocalizeValue>> tableLocalizeDic = new();
     private class tableLocalizeValue {
