@@ -48,6 +48,10 @@ namespace DCFrame {
             /// 本地化的Key
             /// </summary>
             public string localizeKey = "";
+            /// <summary>
+            /// 标注
+            /// </summary>
+            public string remark = "";
         }
 
         [System.Serializable]

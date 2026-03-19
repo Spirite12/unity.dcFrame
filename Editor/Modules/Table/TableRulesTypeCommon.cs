@@ -16,6 +16,7 @@ public class TableRulesTypeCommon : ITableType {
     public bool Init(TableRules.TableRule tableRule) {
         Destroy();
         this.tableRule = tableRule;
+        remarkInput = tableRule?.defaultData?.remark ?? "";
         return true;
     }
     
@@ -25,6 +26,7 @@ public class TableRulesTypeCommon : ITableType {
         tableDataDic.Clear();
         tableLocalizeDic.Clear();
         fileContent = "";
+        remarkInput = "";
     }
     
 #region Editor面板显示
@@ -39,6 +41,8 @@ public class TableRulesTypeCommon : ITableType {
         TableOtherDataGUI();
         EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
         TableKeyDataGUI();
+        EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+        TableRemarkGUI();
     }
 
     /// <summary>
@@ -135,6 +139,39 @@ public class TableRulesTypeCommon : ITableType {
             tableRule.defaultData.localizeKey = fileList[selectIdx];
             EditorGUILayout.EndHorizontal();
         }
+    }
+
+    /// <summary>
+    /// 备注的功能
+    /// </summary>
+    private void TableRemarkGUI() {
+        if (tableRule?.defaultData == null) {
+            return;
+        }
+        EditorGUILayout.LabelField("备注功能：");
+        GUILayout.Space(5);
+        if (remarkInput == null) {
+            remarkInput = tableRule.defaultData.remark ?? "";
+        }
+        remarkInput = EditorGUILayout.TextArea(remarkInput, GUILayout.MinHeight(50));
+        var savedRemark = tableRule.defaultData.remark ?? "";
+        var inputRemark = remarkInput ?? "";
+        var isSameRemark = string.Equals(inputRemark, savedRemark, StringComparison.Ordinal);
+        GUILayout.Space(10);
+        EditorGUILayout.BeginHorizontal();
+        using (new EditorGUI.DisabledScope(isSameRemark)) {
+            if (GUILayout.Button("重置", GUILayout.Width(60))) {
+                remarkInput = savedRemark;
+                GUI.FocusControl(null);
+            }
+        }
+        using (new EditorGUI.DisabledScope(isSameRemark)) {
+            if (GUILayout.Button("保存", GUILayout.Width(60))) {
+                tableRule.defaultData.remark = inputRemark;
+                GUI.FocusControl(null);
+            }
+        }
+        EditorGUILayout.EndHorizontal();
     }
     
     /// <summary>
@@ -661,6 +698,7 @@ public class TableRulesTypeCommon : ITableType {
     private static string fileContent;
     private TableRules.TableRule tableRule;
     private StringTableCollection collection;
+    private string remarkInput;
     private readonly Dictionary<string, TableUtil.FieldType> fieldDic = new();
     private readonly Dictionary<string, List<string>> tableDataDic = new();
     private readonly Dictionary<string, List<tableLocalizeValue>> tableLocalizeDic = new();
