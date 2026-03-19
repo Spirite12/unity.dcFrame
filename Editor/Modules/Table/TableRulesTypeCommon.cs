@@ -43,6 +43,8 @@ public class TableRulesTypeCommon : ITableType {
         TableKeyDataGUI();
         EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
         TableRemarkGUI();
+        EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+        TableFieldRelateGUI();
     }
 
     /// <summary>
@@ -148,12 +150,23 @@ public class TableRulesTypeCommon : ITableType {
         if (tableRule?.defaultData == null) {
             return;
         }
-        EditorGUILayout.LabelField("备注功能：");
+        remarkFoldout = EditorGUILayout.Foldout(remarkFoldout, "备注功能", true);
+        if (!remarkFoldout) {
+            return;
+        }
         GUILayout.Space(5);
         if (remarkInput == null) {
             remarkInput = tableRule.defaultData.remark ?? "";
         }
-        remarkInput = EditorGUILayout.TextArea(remarkInput, GUILayout.MinHeight(50));
+        if (remarkTextStyle == null) {
+            remarkTextStyle = new GUIStyle(EditorStyles.textArea) {
+                wordWrap = true
+            };
+        }
+        var viewWidth = Mathf.Max(100f, EditorGUIUtility.currentViewWidth - 40f);
+        var contentHeight = remarkTextStyle.CalcHeight(new GUIContent(remarkInput), viewWidth);
+        var remarkHeight = Mathf.Max(50f, contentHeight);
+        remarkInput = EditorGUILayout.TextArea(remarkInput, remarkTextStyle, GUILayout.Height(remarkHeight));
         var savedRemark = tableRule.defaultData.remark ?? "";
         var inputRemark = remarkInput ?? "";
         var isSameRemark = string.Equals(inputRemark, savedRemark, StringComparison.Ordinal);
@@ -178,7 +191,10 @@ public class TableRulesTypeCommon : ITableType {
     /// 字段的查找函数生成
     /// </summary>
     private void TableKeyDataGUI() {
-        EditorGUILayout.LabelField("生成查找数据函数");
+        keyFoldout = EditorGUILayout.Foldout(keyFoldout, "生成查找数据函数", true);
+        if (!keyFoldout) {
+            return;
+        }
         GUILayout.Space(5);
         int curCount = 0;
         var keyArray = fieldDic.Keys.ToArray();
@@ -195,6 +211,25 @@ public class TableRulesTypeCommon : ITableType {
                 }
             }
         }
+        // 显示添加数据
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField("添加：", GUILayout.Width(74));
+        if (noneList.Count > 0) {
+            if (!popupDic.ContainsKey("addKeyIndex") || noneList.Count < popupDic["addKeyIndex"]) {
+                popupDic["addKeyIndex"] = 0;
+            }
+            popupDic["addKeyIndex"] = EditorGUILayout.Popup("", popupDic["addKeyIndex"], noneList.ToArray(), GUILayout.Width(100));
+            if (curCount < keyArray.Length) {
+                GUILayout.Space(5);
+                if (GUILayout.Button("+", GUILayout.Width(30))) {
+                    OnClickAddKey(noneList[popupDic["addKeyIndex"]]);
+                }
+            }
+        }else {
+            List<string> noneListTp = new List<string>() { "None" };
+            EditorGUILayout.Popup("", 0, noneListTp.ToArray(), GUILayout.Width(100));
+        }
+        EditorGUILayout.EndHorizontal();
         // 显示列表数据
         var typeList = CommonUtil.GetEnumDescriptions<TableUtil.KeyType>();
         foreach (var field in tableFieldList) {
@@ -235,23 +270,6 @@ public class TableRulesTypeCommon : ITableType {
             }
             EditorGUILayout.EndVertical();
         }
-        GUILayout.Space(5);
-        // 显示添加数据
-        if (noneList.Count > 0) {
-            EditorGUILayout.LabelField("添加：");
-            EditorGUILayout.BeginHorizontal();
-            if (!popupDic.ContainsKey("addKeyIndex") || noneList.Count < popupDic["addKeyIndex"]) {
-                popupDic["addKeyIndex"] = 0;
-            }
-            popupDic["addKeyIndex"] = EditorGUILayout.Popup("", popupDic["addKeyIndex"], noneList.ToArray(), GUILayout.Width(100));
-            if (curCount < keyArray.Length) {
-                GUILayout.Space(5);
-                if (GUILayout.Button("+", GUILayout.Width(30))) {
-                    OnClickAddKey(noneList[popupDic["addKeyIndex"]]);
-                }
-            }
-            EditorGUILayout.EndHorizontal();
-        }
     }
 
     private void OnClickAddKey(string filedName) {
@@ -276,6 +294,256 @@ public class TableRulesTypeCommon : ITableType {
             }
         }
     }
+    
+    #region 字段关联
+    
+    /// <summary>
+    /// 字段关联的渲染
+    /// </summary>
+    private void TableFieldRelateGUI() {
+        if (tableRule?.defaultData == null) {
+            return;
+        }
+        relateFoldout = EditorGUILayout.Foldout(relateFoldout, "字段关联", true);
+        if (!relateFoldout) {
+            return;
+        }
+        // 添加逻辑
+        var fieldNameList = fieldDic.Keys.ToList();
+        if (fieldNameList.Count > 0) {
+            EditorGUILayout.LabelField("添加：");
+            EditorGUILayout.BeginHorizontal();
+                if (!popupDic.ContainsKey("addRelateFieldIndex") || fieldNameList.Count <= popupDic["addRelateFieldIndex"]) {
+                popupDic["addRelateFieldIndex"] = 0;
+            }
+            popupDic["addRelateFieldIndex"] = EditorGUILayout.Popup("", popupDic["addRelateFieldIndex"], fieldNameList.ToArray(), GUILayout.Width(120));
+            var selectedFieldName = fieldNameList[popupDic["addRelateFieldIndex"]];
+            var selectedFieldData = tableRule.defaultData.fieldList.Find((x) => x.fieldName == selectedFieldName);
+            var usedTables = new HashSet<string>();
+            if (selectedFieldData != null && selectedFieldData.fieldRelateList != null) {
+                foreach (var relate in selectedFieldData.fieldRelateList) {
+                    if (!string.IsNullOrEmpty(relate.tableName)) {
+                        usedTables.Add(relate.tableName);
+                    }
+                }
+            }
+            var tableList = GetAllTableNames(tableRule.name);
+            tableList.RemoveAll((x) => usedTables.Contains(x));
+            var tableDisplayList = tableList.Select(GetTableDisplayName).ToList();
+            if (tableList.Count > 0) {
+                if (!popupDic.ContainsKey("addRelateTableIndex") || tableList.Count <= popupDic["addRelateTableIndex"]) {
+                    popupDic["addRelateTableIndex"] = 0;
+                }
+                popupDic["addRelateTableIndex"] = EditorGUILayout.Popup("", popupDic["addRelateTableIndex"], tableDisplayList.ToArray(), GUILayout.Width(120));
+                if (GUILayout.Button("+", GUILayout.Width(30))) {
+                    if (selectedFieldData != null) {
+                        var relate = new TableRules.TableFieldRelate {
+                            tableName = tableList[popupDic["addRelateTableIndex"]],
+                            fieldName = ""
+                        };
+                        selectedFieldData.fieldRelateList.Add(relate);
+                    }
+                    popupDic["addRelateFieldIndex"] = popupDic["addRelateFieldIndex"];
+                    popupDic["addRelateTableIndex"] = 0;
+                }
+            } else {
+                EditorGUILayout.LabelField("无表可选", GUILayout.Width(120));
+                using (new EditorGUI.DisabledScope(true)) {
+                    GUILayout.Button("+", GUILayout.Width(30));
+                }
+            }
+            EditorGUILayout.EndHorizontal();
+        }
+        GUILayout.Space(5);
+        // 渲染逻辑
+        var hasRelateList = new List<TableRules.TableField>();
+        foreach (var field in tableRule.defaultData.fieldList) {
+            if (field == null) {
+                continue;
+            }
+            if (field.fieldRelateList != null && field.fieldRelateList.Count > 0) {
+                hasRelateList.Add(field);
+            }
+        }
+        int addCount = 0;
+        foreach (var field in hasRelateList) {
+            if (field == null) {
+                continue;
+            }
+            EditorGUILayout.BeginVertical(GUI.skin.box);
+            GUILayout.Space(4);
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.Label(++addCount + ".", GUILayout.Width(14));
+            var fieldLabel = field.fieldName;
+            var fieldLabelWidth = EditorStyles.miniButton.CalcSize(new GUIContent(fieldLabel)).x + 6f;
+            if (GUILayout.Button(fieldLabel, GUILayout.Width(fieldLabelWidth))) {
+                field.fieldRelateList.Clear();
+                EditorGUILayout.EndHorizontal();
+                EditorGUILayout.EndVertical();
+                continue;
+            }
+            EditorGUILayout.EndHorizontal();
+            field.fieldRelateList ??= new List<TableRules.TableFieldRelate>();
+            var selectedMap = new Dictionary<string, List<string>>();
+            var tableOrder = new List<string>();
+            foreach (var item in field.fieldRelateList) {
+                if (item == null || string.IsNullOrEmpty(item.tableName)) {
+                    continue;
+                }
+                if (!selectedMap.TryGetValue(item.tableName, out var list)) {
+                    list = new List<string>();
+                    selectedMap[item.tableName] = list;
+                    tableOrder.Add(item.tableName);
+                }
+                if (!string.IsNullOrEmpty(item.fieldName) && !list.Contains(item.fieldName)) {
+                    list.Add(item.fieldName);
+                }
+            }
+            foreach (var tableName in tableOrder) {
+                EditorGUILayout.BeginVertical(GUI.skin.box);
+                var fieldList = selectedMap[tableName];
+                var relateFields = GetTableFieldList(tableName);
+                relateFields.RemoveAll((x) => fieldList.Contains(x));
+                relateFields.Insert(0, "None");
+                var popupKey = $"{field.fieldName}_relateTable_{tableName}";
+                if (!popupDic.ContainsKey(popupKey) || relateFields.Count <= popupDic[popupKey]) {
+                    popupDic[popupKey] = 0;
+                }
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.LabelField(GetTableDisplayName(tableName), GUILayout.Width(120));
+                var selectIdx = EditorGUILayout.Popup("", popupDic[popupKey], relateFields.ToArray(), GUILayout.Width(120));
+                popupDic[popupKey] = selectIdx;
+                if (selectIdx != 0) {
+                    field.fieldRelateList.Add(new TableRules.TableFieldRelate {
+                        tableName = tableName,
+                        fieldName = relateFields[selectIdx]
+                    });
+                    popupDic[popupKey] = 0;
+                }
+                if (GUILayout.Button("-", GUILayout.Width(30))) {
+                    RemoveRelateTable(field, tableName);
+                    EditorGUILayout.EndHorizontal();
+                }
+                if (GUILayout.Button("跳转", GUILayout.Width(50))) {
+                    Debug.LogWarning("跳转");
+                }
+                EditorGUILayout.EndHorizontal();
+                if (fieldList.Count > 0) {
+                    EditorGUILayout.BeginHorizontal();
+                    foreach (var name in fieldList) {
+                        if (GUILayout.Button(name, GUILayout.Width(EditorStyles.popup.CalcSize(new GUIContent(name)).x))) {
+                            ClearRelateFieldName(field, tableName, name);
+                        }
+                    }
+                    EditorGUILayout.EndHorizontal();
+                }
+                GUILayout.Space(4);
+                EditorGUILayout.EndVertical();
+            }
+            GUILayout.Space(4);
+            EditorGUILayout.EndVertical();
+        }
+    }
+
+    /// <summary>
+    /// 字段关联的名称
+    /// </summary>
+    private static string GetTableDisplayName(string tableName) {
+        if (string.IsNullOrEmpty(tableName)) {
+            return "";
+        }
+        return tableName.StartsWith("Table", StringComparison.Ordinal) ? tableName.Substring(5) : tableName;
+    }
+
+    
+    /// <summary>
+    /// 清除关联字段名
+    /// </summary>
+    private static void ClearRelateFieldName(TableRules.TableField field, string tableName, string fieldName) {
+        if (field?.fieldRelateList == null) {
+            return;
+        }
+        foreach (var relate in field.fieldRelateList) {
+            if (relate == null) {
+                continue;
+            }
+            if (string.Equals(relate.tableName, tableName, StringComparison.Ordinal) &&
+                string.Equals(relate.fieldName, fieldName, StringComparison.Ordinal)) {
+                relate.fieldName = "";
+                break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 移除关联表名
+    /// </summary>
+    private static void RemoveRelateTable(TableRules.TableField field, string tableName) {
+        if (field?.fieldRelateList == null) {
+            return;
+        }
+        for (int i = field.fieldRelateList.Count - 1; i >= 0; i--) {
+            var relate = field.fieldRelateList[i];
+            if (relate != null && string.Equals(relate.tableName, tableName, StringComparison.Ordinal)) {
+                field.fieldRelateList.RemoveAt(i);
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 获取表名列表
+    /// </summary>
+    private static List<string> GetAllTableNames(string curTableName) {
+        var rules = AssetDatabase.LoadAssetAtPath<TableRules>(Asset.GetAssetPath("Table/TableRules", Asset.PrefixPath.Settings));
+        var list = new List<string>();
+        if (!rules || rules.tableRuleList == null) {
+            return list;
+        }
+        foreach (var rule in rules.tableRuleList) {
+            if (rule == null || string.IsNullOrEmpty(rule.name)) {
+                continue;
+            }
+            if (string.Equals(rule.name, curTableName, StringComparison.OrdinalIgnoreCase)) {
+                continue;
+            }
+            list.Add(rule.name);
+        }
+        return list;
+    }
+
+    /// <summary>
+    /// 获取表字段列表
+    /// </summary>
+    private static List<string> GetTableFieldList(string tableName) {
+        if (string.IsNullOrEmpty(tableName)) {
+            return new List<string>();
+        }
+        if (fieldRelateTableDic.TryGetValue(tableName, out var cached)) {
+            return new List<string>(cached);
+        }
+        var list = new List<string>();
+        var filePath = TableUtil.GetFilePath(tableName);
+        if (!File.Exists(filePath)) {
+            fieldRelateTableDic[tableName] = list;
+            return new List<string>(list);
+        }
+        var config = new CsvConfiguration(CultureInfo.InvariantCulture);
+        using var reader = new StreamReader(filePath, Encoding.UTF8);
+        using var csv = new CsvReader(reader, config);
+        var records = csv.GetRecords<dynamic>();
+        foreach (var record in records) {
+            foreach (var kvp in (IDictionary<string, object>)record) {
+                if (!list.Contains(kvp.Key)) {
+                    list.Add(kvp.Key);
+                }
+            }
+            break;
+        }
+        fieldRelateTableDic[tableName] = list;
+        return new List<string>(list);
+    }
+    
+    #endregion
     
 #endregion
 
@@ -699,9 +967,14 @@ public class TableRulesTypeCommon : ITableType {
     private TableRules.TableRule tableRule;
     private StringTableCollection collection;
     private string remarkInput;
+    private GUIStyle remarkTextStyle;
+    private bool remarkFoldout = true;
+    private bool keyFoldout = true;
+    private bool relateFoldout = true;
     private readonly Dictionary<string, TableUtil.FieldType> fieldDic = new();
     private readonly Dictionary<string, List<string>> tableDataDic = new();
     private readonly Dictionary<string, List<tableLocalizeValue>> tableLocalizeDic = new();
+    private static readonly Dictionary<string, List<string>> fieldRelateTableDic = new();
     private class tableLocalizeValue {
         public string Id;
         public string Text;

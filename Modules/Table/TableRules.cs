@@ -80,6 +80,22 @@ namespace DCFrame {
             /// 多键字段列表
             /// </summary>
             public List<string> fieldKeyList = new List<string>();
+            /// <summary>
+            /// 表关联列表
+            /// </summary>
+            public List<TableFieldRelate> fieldRelateList = new List<TableFieldRelate>();
+        }
+        
+        [System.Serializable]
+        public class TableFieldRelate {
+            /// <summary>
+            /// 表关联名
+            /// </summary>
+            public string tableName = "";
+            /// <summary>
+            /// 表关联字段
+            /// </summary>
+            public string fieldName = "";
         }
     }
 }
