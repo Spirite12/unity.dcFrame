@@ -19,9 +19,15 @@ public class TableRulesTypeCommon : ITableType {
         remarkInput = tableRule?.defaultData?.remark ?? "";
         return true;
     }
-    
+
+    public void InitEditor(TableRulesEditor rulesEditor) {
+        this.rulesEditor = rulesEditor;
+    }
+
     public void Destroy() {
+        CleanInvalidRelateData();
         fieldDic.Clear();
+        relateTableList.Clear();
         popupDic.Clear();
         tableDataDic.Clear();
         tableLocalizeDic.Clear();
@@ -341,7 +347,7 @@ public class TableRulesTypeCommon : ITableType {
                             tableName = tableList[popupDic["addRelateTableIndex"]],
                             fieldName = ""
                         };
-                        selectedFieldData.fieldRelateList.Add(relate);
+                        selectedFieldData.fieldRelateList?.Add(relate);
                     }
                     popupDic["addRelateFieldIndex"] = popupDic["addRelateFieldIndex"];
                     popupDic["addRelateTableIndex"] = 0;
@@ -425,7 +431,7 @@ public class TableRulesTypeCommon : ITableType {
                     EditorGUILayout.EndHorizontal();
                 }
                 if (GUILayout.Button("跳转", GUILayout.Width(50))) {
-                    Debug.LogWarning("跳转");
+                    rulesEditor.JumpConfig(tableName);
                 }
                 EditorGUILayout.EndHorizontal();
                 if (fieldList.Count > 0) {
@@ -493,22 +499,22 @@ public class TableRulesTypeCommon : ITableType {
     /// <summary>
     /// 获取表名列表
     /// </summary>
-    private static List<string> GetAllTableNames(string curTableName) {
-        var rules = AssetDatabase.LoadAssetAtPath<TableRules>(Asset.GetAssetPath("Table/TableRules", Asset.PrefixPath.Settings));
-        var list = new List<string>();
-        if (!rules || rules.tableRuleList == null) {
-            return list;
+    private List<string> GetAllTableNames(string curTableName) {
+        if (relateTableList.Count > 0) {
+            return relateTableList;
         }
-        foreach (var rule in rules.tableRuleList) {
+        foreach (var rule in rulesEditor.tableRules.tableRuleList) {
             if (rule == null || string.IsNullOrEmpty(rule.name)) {
                 continue;
             }
-            if (string.Equals(rule.name, curTableName, StringComparison.OrdinalIgnoreCase)) {
+            bool condition1 = string.Equals(rule.name, curTableName, StringComparison.OrdinalIgnoreCase);
+            bool condition2 = rule.enumTableType != TableUtil.TableType.Default;
+            if (condition1 || condition2) {
                 continue;
             }
-            list.Add(rule.name);
+            relateTableList.Add(rule.name);
         }
-        return list;
+        return relateTableList;
     }
 
     /// <summary>
@@ -541,6 +547,29 @@ public class TableRulesTypeCommon : ITableType {
         }
         fieldRelateTableDic[tableName] = list;
         return new List<string>(list);
+    }
+    
+    /// <summary>
+    /// 清除表关联
+    /// </summary>
+    private void CleanInvalidRelateData() {
+        var fieldList = tableRule?.defaultData?.fieldList;
+        if (fieldList == null) {
+            return;
+        }
+        foreach (var field in fieldList) {
+            if (field?.fieldRelateList == null) {
+                continue;
+            }
+            for (int i = field.fieldRelateList.Count - 1; i >= 0; i--) {
+                var relate = field.fieldRelateList[i];
+                if (relate == null ||
+                    string.IsNullOrEmpty(relate.tableName) ||
+                    string.IsNullOrEmpty(relate.fieldName)) {
+                    field.fieldRelateList.RemoveAt(i);
+                }
+            }
+        }
     }
     
     #endregion
@@ -964,6 +993,7 @@ public class TableRulesTypeCommon : ITableType {
 #endregion
 
     private static string fileContent;
+    private TableRulesEditor rulesEditor;
     private TableRules.TableRule tableRule;
     private StringTableCollection collection;
     private string remarkInput;
@@ -974,6 +1004,7 @@ public class TableRulesTypeCommon : ITableType {
     private readonly Dictionary<string, TableUtil.FieldType> fieldDic = new();
     private readonly Dictionary<string, List<string>> tableDataDic = new();
     private readonly Dictionary<string, List<tableLocalizeValue>> tableLocalizeDic = new();
+    private List<string> relateTableList = new();
     private static readonly Dictionary<string, List<string>> fieldRelateTableDic = new();
     private class tableLocalizeValue {
         public string Id;

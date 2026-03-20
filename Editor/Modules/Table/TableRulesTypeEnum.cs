@@ -36,6 +36,8 @@ public class TableRulesTypeEnum : ITableType {
             return false;
         }
     }
+    public void InitEditor(TableRulesEditor rulesEditor) {
+    }
 
     public void Destroy() {
         tableDic.Clear();

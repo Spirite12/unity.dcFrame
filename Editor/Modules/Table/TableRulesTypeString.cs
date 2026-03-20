@@ -31,6 +31,9 @@ public class TableRulesTypeString : ITableType {
         }
     }
 
+    public void InitEditor(TableRulesEditor rulesEditor) {
+    }
+
     public void Destroy() {
         tableList.Clear();
     }

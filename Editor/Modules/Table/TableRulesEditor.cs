@@ -42,6 +42,19 @@ public class TableRulesEditor : Editor {
         DrawDefaultInspector();
         RenderTableInfo();
     }
+    
+    #region 提供 tableType 调用的函数
+
+    /// <summary>
+    /// 跳转配置
+    /// </summary>
+    public void JumpConfig(string tableName) {
+        findTableName = tableName;
+        RenderFindConfig();
+    }
+    
+    
+    #endregion
 
     #region ConfigInfo
 
@@ -74,6 +87,7 @@ public class TableRulesEditor : Editor {
         switch (tableRule.enumTableType) {
             case TableUtil.TableType.Default:
                 tableType = new TableRulesTypeCommon();
+                tableType.InitEditor(this);
                 break;
             case TableUtil.TableType.Const:
                 tableType = new TableRulesTypeConst();
@@ -147,9 +161,10 @@ public class TableRulesEditor : Editor {
         GUILayout.Space(16);
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("表列表: ", GUILayout.Width(120));
-        List<string> nameList = new List<string>();
-        foreach (var rule in tableRules.tableRuleList) {
-            nameList.Add(rule.name.Replace("Table", ""));
+        if (nameList.Count <= 0) {
+            foreach (var rule in tableRules.tableRuleList) {
+                nameList.Add(rule.name.Replace("Table", ""));
+            }
         }
         selectIndex = EditorGUILayout.Popup(selectIndex, nameList.ToArray());
         EditorGUILayout.EndHorizontal();
@@ -392,9 +407,10 @@ public class TableRulesEditor : Editor {
 
     #endregion
 
-    private TableRules tableRules;
+    public TableRules tableRules;
     private ITableType tableType;
     private int lastSelectIndex = -1;
+    private readonly List<string> nameList = new();
     private TableUtil.TableType lastEnumTableType;
     /// <summary>
     /// 所选择的列表
