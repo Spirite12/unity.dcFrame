@@ -83,6 +83,9 @@ public class TableRulesEditor : Editor {
         if (!isForce && lastSelectIndex == selectIndex && lastEnumTableType == tableRule.enumTableType) {
             return;
         }
+        if (lastSelectIndex != selectIndex) {
+            previousSelectIndex = lastSelectIndex;
+        }
         tableType?.Destroy();
         switch (tableRule.enumTableType) {
             case TableUtil.TableType.Default:
@@ -391,6 +394,7 @@ public class TableRulesEditor : Editor {
     /// 渲染提示说明
     /// </summary>
     private void RenderBtnTips() {
+        GUILayout.BeginHorizontal();
         if (GUILayout.Button("提示说明")) {
             string str = "";
             str += String.Format($"CSV配表不允许使用科学计数法，若要使用大数字，则在前方新增 {TableUtil.ScientificSign} 字符\n\n");
@@ -402,6 +406,12 @@ public class TableRulesEditor : Editor {
             str += String.Format($"获取最大值：\n获取当前表字段数据内最大值并构造字段\n\n");
             EditorUtility.DisplayDialog("说明介绍", str, "关闭");
         }
+        if (previousSelectIndex != -1 && previousSelectIndex != selectIndex) {
+            if (GUILayout.Button("跳转上一个表")) {
+                selectIndex = previousSelectIndex;
+            }
+        }
+        GUILayout.EndHorizontal();
         GUILayout.Space(5);
     }
 
@@ -409,6 +419,7 @@ public class TableRulesEditor : Editor {
 
     public TableRules tableRules;
     private ITableType tableType;
+    private int previousSelectIndex = -1;
     private int lastSelectIndex = -1;
     private readonly List<string> nameList = new();
     private TableUtil.TableType lastEnumTableType;
