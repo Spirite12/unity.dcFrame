@@ -12,13 +12,63 @@ namespace DCFrame {
         /// 根据地址加载资源
         /// </summary>
         public static async UniTask<T> LoadAsset<T>(string address) where T : Object {
+            if (assetDic.TryGetValue(address, out var assetRef)) {
+                assetRef.count = Mathf.Max(0, assetRef.count) + 1;
+                assetRef.zeroTime = -1f;
+                return assetRef.handle.Result as T;
+            }
             var handle = Addressables.LoadAssetAsync<T>(address);
             await handle.Task;
             if (handle.Status != AsyncOperationStatus.Succeeded) {
                 Debug.LogError($"加载资源失败，地址是: {address}");
                 return null;
             }
+            assetDic[address] = new AssetAddRef {
+                handle = handle,
+                count = 1,
+                zeroTime = -1f
+            };
             return handle.Result;
+        }
+        
+        /// <summary>
+        /// 根据地址卸载资源
+        /// </summary>
+        public static void Release(string address) {
+            if (!assetDic.TryGetValue(address, out var assetRef)) {
+                Debug.LogWarning($"未找到资源: {address}");
+                return;
+            }
+            assetRef.count--;
+            if (assetRef.count > 0) {
+                return;
+            }
+            assetRef.count = 0;
+            assetRef.zeroTime = Time.realtimeSinceStartup;
+        }
+        
+        /// <summary>
+        /// 释放计时处理
+        /// </summary>
+        public static void Update() {
+            if (assetDic.Count == 0) {
+                return;
+            }
+            var now = Time.realtimeSinceStartup;
+            removeList.Clear();
+            foreach (var kv in assetDic) {
+                var assetRef = kv.Value;
+                if (assetRef.count != 0 || assetRef.zeroTime < 0f) {
+                    continue;
+                }
+                if (now - assetRef.zeroTime >= ReleaseDelay) {
+                    Addressables.Release(assetRef.handle);
+                    removeList.Add(kv.Key);
+                }
+            }
+            for (int i = 0; i < removeList.Count; i++) {
+                assetDic.Remove(removeList[i]);
+            }
         }
 
         #region 加载前缀和函数
@@ -83,5 +133,20 @@ namespace DCFrame {
         }
 
         #endregion
+        
+        
+        /// <summary>
+        /// 资源计数
+        /// </summary>
+        private static readonly Dictionary<string, AssetAddRef> assetDic = new();
+        private static readonly List<string> removeList = new();
+        private const float ReleaseDelay = 60f;
+
+        private class AssetAddRef {
+            public AsyncOperationHandle handle;
+            public int count;
+            public float zeroTime;
+        }
+
     }
 }
