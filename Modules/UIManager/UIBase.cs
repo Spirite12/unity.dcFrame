@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -242,7 +243,7 @@ namespace DCFrame {
 			}
 
 			var address = Asset.GetPrefabPath(AssetPath + "/" + AssetName);
-			var taskLoadPrefab = Asset.LoadAsset<GameObject>(address);
+			var taskLoadPrefab = LoadAsset<GameObject>(address);
 			var taskOnLoading = OnLoading();
 			var (prefabObj, _) = await UniTask.WhenAll(taskLoadPrefab, taskOnLoading.AsAsyncUnitUniTask());
 			if (!prefabObj) {
@@ -256,15 +257,56 @@ namespace DCFrame {
 		/// 卸载预制体
 		/// </summary>
 		private void Unload() {
+			Release();
             Object.Destroy(uiGameObject);
 			uiGameObject = null;
             OnUnLoadUI?.Invoke(this);
 		}
 
         #endregion
+        
+        #region 资源加载
+        
+        /// <summary>
+        /// 加载资源
+        /// </summary>
+        /// <param name="address"></param> 地址
+        /// <typeparam name="T1"></typeparam> 类型
+        protected async UniTask<T1> LoadAsset<T1>(string address) where T1 : Object {
+	        var asset = await Asset.LoadAsset<T1>(address);
+	        if (!asset) {
+		        return null;
+	        }
+	        addressList.Add(address);
+	        return asset;
+        }
 
-        private Action closeAction; // 关闭界面的回调
-        private bool isOpen;// 当前界面是否处于打开状态
-		private int layerIndex = 0;// 当前界面在层内的索引
+        /// <summary>
+        /// 释放资源
+        /// </summary>
+        private void Release() {
+	        foreach (var address in addressList) {
+		        Asset.Release(address);
+	        }
+        }
+        
+        #endregion
+
+        /// <summary>
+        /// 关闭界面的回调
+        /// </summary>
+        private Action closeAction;
+        /// <summary>
+        /// 当前界面是否处于打开状态
+        /// </summary>
+        private bool isOpen;
+        /// <summary>
+        /// 当前界面在层内的索引
+        /// </summary>
+		private int layerIndex = 0;
+		/// <summary>
+		/// 资源加载地址列表
+		/// </summary>
+		private readonly List<string> addressList = new();
 	}
 }

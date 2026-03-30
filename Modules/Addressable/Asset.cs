@@ -12,9 +12,9 @@ namespace DCFrame {
         /// 根据地址加载资源
         /// </summary>
         public static async UniTask<T> LoadAsset<T>(string address) where T : Object {
-            if (assetDic.TryGetValue(address, out var assetRef)) {
+            if (AssetDic.TryGetValue(address, out var assetRef)) {
                 assetRef.count = Mathf.Max(0, assetRef.count) + 1;
-                assetRef.zeroTime = -1f;
+                assetRef.releaseTime = -1f;
                 return assetRef.handle.Result as T;
             }
             var handle = Addressables.LoadAssetAsync<T>(address);
@@ -23,10 +23,10 @@ namespace DCFrame {
                 Debug.LogError($"加载资源失败，地址是: {address}");
                 return null;
             }
-            assetDic[address] = new AssetAddRef {
+            AssetDic[address] = new AssetRef {
                 handle = handle,
                 count = 1,
-                zeroTime = -1f
+                releaseTime = -1f
             };
             return handle.Result;
         }
@@ -35,7 +35,7 @@ namespace DCFrame {
         /// 根据地址卸载资源
         /// </summary>
         public static void Release(string address) {
-            if (!assetDic.TryGetValue(address, out var assetRef)) {
+            if (!AssetDic.TryGetValue(address, out var assetRef)) {
                 Debug.LogWarning($"未找到资源: {address}");
                 return;
             }
@@ -44,30 +44,30 @@ namespace DCFrame {
                 return;
             }
             assetRef.count = 0;
-            assetRef.zeroTime = Time.realtimeSinceStartup;
+            assetRef.releaseTime = Time.realtimeSinceStartup;
         }
         
         /// <summary>
         /// 释放计时处理
         /// </summary>
-        public static void Update() {
-            if (assetDic.Count == 0) {
+        public static void FixedUpdate() {
+            if (AssetDic.Count == 0) {
                 return;
             }
             var now = Time.realtimeSinceStartup;
             removeList.Clear();
-            foreach (var kv in assetDic) {
+            foreach (var kv in AssetDic) {
                 var assetRef = kv.Value;
-                if (assetRef.count != 0 || assetRef.zeroTime < 0f) {
+                if (assetRef.count != 0 || assetRef.releaseTime < 0f) {
                     continue;
                 }
-                if (now - assetRef.zeroTime >= ReleaseDelay) {
+                if (now - assetRef.releaseTime >= ReleaseDelay) {
                     Addressables.Release(assetRef.handle);
                     removeList.Add(kv.Key);
                 }
             }
             for (int i = 0; i < removeList.Count; i++) {
-                assetDic.Remove(removeList[i]);
+                AssetDic.Remove(removeList[i]);
             }
         }
 
@@ -138,14 +138,29 @@ namespace DCFrame {
         /// <summary>
         /// 资源计数
         /// </summary>
-        private static readonly Dictionary<string, AssetAddRef> assetDic = new();
+        private static readonly Dictionary<string, AssetRef> AssetDic = new();
         private static readonly List<string> removeList = new();
+        /// <summary>
+        /// 资源释放时间
+        /// </summary>
         private const float ReleaseDelay = 60f;
 
-        private class AssetAddRef {
+        /// <summary>
+        /// 资源引用类
+        /// </summary>
+        private class AssetRef {
+            /// <summary>
+            /// 资源句柄
+            /// </summary>
             public AsyncOperationHandle handle;
+            /// <summary>
+            /// 引用次数
+            /// </summary>
             public int count;
-            public float zeroTime;
+            /// <summary>
+            /// 释放时间
+            /// </summary>
+            public float releaseTime;
         }
 
     }

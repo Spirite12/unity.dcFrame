@@ -30,6 +30,10 @@ namespace DCFrame {
             if (redTipUI) {
                 DestroyImmediate(redTipUI.gameObject);
             }
+            if (!string.IsNullOrEmpty(redTipPrefabAddress)) {
+                Asset.Release(redTipPrefabAddress);
+                redTipPrefabAddress = "";
+            }
         }
 
         /// <summary>
@@ -63,13 +67,22 @@ namespace DCFrame {
             if (redTipName == "") {
                 return;
             }
-            GameObject prefab = await Asset.LoadAsset<GameObject>(Asset.GetPrefabPath("Frame/RedTip"));
+            var address = Asset.GetPrefabPath("Frame/RedTip");
+            GameObject prefab = await Asset.LoadAsset<GameObject>(address);
+            if (!prefab) {
+                return;
+            }
+            redTipPrefabAddress = address;
             var goNew = Instantiate(prefab, transform);
             redTipUI = goNew.GetComponent<RedTipUI>();
             redTipUI.RenderRedTipStatus(redTipName, redTipId);
         }
 
         private RedTipUI redTipUI;
+        /// <summary>
+        /// 资源加载地址
+        /// </summary>
+        private string redTipPrefabAddress = "";
         [SerializeField]
         private string redTipName = "";
         [SerializeField]

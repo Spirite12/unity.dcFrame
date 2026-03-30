@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
+using UnityEngine;
 
 namespace DCFrame {
     public abstract class MonoSingleton<T> : MonoBehaviour where T : MonoSingleton<T> {
@@ -28,7 +30,36 @@ namespace DCFrame {
             }
         }
         protected virtual void OnDestroy() {
+            Release();
             mInstance = null;
         }
+
+        /// <summary>
+        /// 加载资源
+        /// </summary>
+        /// <param name="address"></param> 地址
+        /// <typeparam name="T1"></typeparam> 类型
+        protected async UniTask<T1> LoadAsset<T1>(string address) where T1 : Object {
+            var asset = await Asset.LoadAsset<T1>(address);
+            if (!asset) {
+                return null;
+            }
+            addressList.Add(address);
+            return asset;
+        }
+
+        /// <summary>
+        /// 释放资源
+        /// </summary>
+        private void Release() {
+            foreach (var address in addressList) {
+                Asset.Release(address);
+            }
+        }
+
+        /// <summary>
+        /// 资源加载地址列表
+        /// </summary>
+        private readonly List<string> addressList = new();
     }
 }

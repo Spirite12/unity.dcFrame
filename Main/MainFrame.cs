@@ -30,6 +30,7 @@ namespace DCFrame {
 		}
 		
 		private void FixedUpdate() {
+			Asset.FixedUpdate();
 			CacheMgr.FixedUpdate();
 		}
 
