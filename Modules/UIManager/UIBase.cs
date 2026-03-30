@@ -277,7 +277,11 @@ namespace DCFrame {
 	        if (!asset) {
 		        return null;
 	        }
-	        addressList.Add(address);
+	        if (addressRefDic.TryGetValue(address, out int count)) {
+		        addressRefDic[address] = count + 1;
+	        } else {
+		        addressRefDic[address] = 1;
+	        }
 	        return asset;
         }
 
@@ -285,9 +289,12 @@ namespace DCFrame {
         /// 释放资源
         /// </summary>
         private void Release() {
-	        foreach (var address in addressList) {
-		        Asset.Release(address);
+	        foreach (var kv in addressRefDic) {
+		        for (int i = 0; i < kv.Value; i++) {
+			        Asset.Release(kv.Key);
+		        }
 	        }
+            addressRefDic.Clear();
         }
         
         #endregion
@@ -307,6 +314,6 @@ namespace DCFrame {
 		/// <summary>
 		/// 资源加载地址列表
 		/// </summary>
-		private readonly List<string> addressList = new();
+		private readonly Dictionary<string, int> addressRefDic = new();
 	}
 }

@@ -12,23 +12,53 @@ namespace DCFrame {
         /// 根据地址加载资源
         /// </summary>
         public static async UniTask<T> LoadAsset<T>(string address) where T : Object {
+            // 获取是否已经加载到
             if (AssetDic.TryGetValue(address, out var assetRef)) {
                 assetRef.count = Mathf.Max(0, assetRef.count) + 1;
                 assetRef.releaseTime = -1f;
                 return assetRef.handle.Result as T;
             }
+            // 获取是否正在加载中
+            if (LoadingDic.TryGetValue(address, out var loadingRef)) {
+                loadingRef.count = Mathf.Max(0, loadingRef.count) + 1;
+                await loadingRef.handle.Task;
+                if (loadingRef.handle.Status != AsyncOperationStatus.Succeeded) {
+                    Debug.LogError($"加载资源失败，地址是: {address}");
+                    return null;
+                }
+                if (!AssetDic.TryGetValue(address, out var loadedAssetRef)) {
+                    GetAssetRef(address, loadingRef.handle, loadingRef.count);
+                    LoadingDic.Remove(address);
+                    loadedAssetRef = AssetDic[address];
+                }
+                return loadedAssetRef.handle.Result as T;
+            }
+            // 加载一个新的
             var handle = Addressables.LoadAssetAsync<T>(address);
+            var pendingRef = new LoadingRef {
+                handle = handle,
+                count = 1
+            };
+            LoadingDic[address] = pendingRef;
             await handle.Task;
+            LoadingDic.Remove(address);
             if (handle.Status != AsyncOperationStatus.Succeeded) {
                 Debug.LogError($"加载资源失败，地址是: {address}");
                 return null;
             }
+            GetAssetRef(address, handle, pendingRef.count);
+            return handle.Result;
+        }
+
+        /// <summary>
+        /// 获取一个实例
+        /// </summary>
+        private static void GetAssetRef(string address, AsyncOperationHandle handle, int count) {
             AssetDic[address] = new AssetRef {
                 handle = handle,
-                count = 1,
+                count = count,
                 releaseTime = -1f
             };
-            return handle.Result;
         }
         
         /// <summary>
@@ -139,6 +169,7 @@ namespace DCFrame {
         /// 资源计数
         /// </summary>
         private static readonly Dictionary<string, AssetRef> AssetDic = new();
+        private static readonly Dictionary<string, LoadingRef> LoadingDic = new();
         private static readonly List<string> removeList = new();
         /// <summary>
         /// 资源释放时间
@@ -161,6 +192,14 @@ namespace DCFrame {
             /// 释放时间
             /// </summary>
             public float releaseTime;
+        }
+
+        /// <summary>
+        /// 正在加载中的资源引用
+        /// </summary>
+        private class LoadingRef {
+            public AsyncOperationHandle handle;
+            public int count;
         }
 
     }
