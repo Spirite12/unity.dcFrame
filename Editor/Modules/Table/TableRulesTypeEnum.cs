@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
-using CsvHelper;
-using CsvHelper.Configuration;
 using DCFrame;
 using UnityEditor;
 using UnityEditor.Localization;
@@ -14,11 +10,14 @@ using UnityEngine;
 public class TableRulesTypeEnum : ITableType {
     public bool Init(TableRules.TableRule tableRule) {
         this.tableRule = tableRule;
+        tableDic.Clear();
         try {
-            var config = new CsvConfiguration(CultureInfo.InvariantCulture);
-            using var reader = new StreamReader(TableUtil.GetFilePath(tableRule.name), Encoding.UTF8);
-            var csv = new CsvReader(reader, config);
-            var tableList = csv.GetRecords<TableEnumClass>().ToList();
+            using var csv = TableCsvEditorUtil.CreateCsvReader(TableUtil.GetFilePath(tableRule.name));
+            TableCsvEditorUtil.ReadHeaderData(csv);
+            var tableList = new List<TableEnumClass>();
+            while (csv.Read()) {
+                tableList.Add(csv.GetRecord<TableEnumClass>());
+            }
             foreach (var table in tableList) {
                 if (!tableDic.ContainsKey(table.EnumSign)) {
                     tableDic[table.EnumSign] = new TableDicValue() {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Security;
 using System.Text;
 using CsvHelper;
 using CsvHelper.Configuration;
@@ -27,6 +28,7 @@ public class TableRulesTypeCommon : ITableType {
     public void Destroy() {
         CleanInvalidRelateData();
         fieldDic.Clear();
+        fieldNameDisplayDic.Clear();
         relateTableList.Clear();
         popupDic.Clear();
         tableDataDic.Clear();
@@ -60,22 +62,22 @@ public class TableRulesTypeCommon : ITableType {
         if (fieldDic.Count > 0) {
             return;
         }
-        // 解析表数据
-        var config = new CsvConfiguration(CultureInfo.InvariantCulture);
-        using var reader = new StreamReader(TableUtil.GetFilePath(tableRule.name), Encoding.UTF8);
-        using var csv = new CsvReader(reader, config);
-        // 读取 CSV 并解析成动态对象
-        var records = csv.GetRecords<dynamic>();
-        // 遍历所有行
-        foreach (var record in records) {
-            // 每行数据,只获取第一行数据
-            foreach (var kvp in (IDictionary<string, object>)record) {
-                if (!fieldDic.ContainsKey(kvp.Key)) {
-                    var enumFieldType = TableUtil.GetEnumFieldType(kvp.Value.ToString());
-                    fieldDic.Add(kvp.Key, enumFieldType);
-                }
+        using var csv = TableCsvEditorUtil.CreateCsvReader(TableUtil.GetFilePath(tableRule.name));
+        var headerData = TableCsvEditorUtil.ReadHeaderData(csv);
+        fieldNameDisplayDic.Clear();
+        foreach (var header in headerData.HeaderList) {
+            fieldNameDisplayDic[header] = headerData.GetDisplayName(header);
+        }
+
+        if (!csv.Read()) {
+            return;
+        }
+
+        foreach (var header in headerData.HeaderList) {
+            if (!fieldDic.ContainsKey(header)) {
+                var enumFieldType = TableUtil.GetEnumFieldType(csv.GetField(header) ?? string.Empty);
+                fieldDic.Add(header, enumFieldType);
             }
-            break;
         }
     }
     
@@ -85,6 +87,7 @@ public class TableRulesTypeCommon : ITableType {
     private void TableFieldDataGUI() {
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("字段名", GUILayout.Width(70));
+        EditorGUILayout.LabelField("中文名", GUILayout.Width(70));
         EditorGUILayout.LabelField("数据类型", GUILayout.Width(60));
         EditorGUILayout.LabelField("本地化", GUILayout.Width(40));
         EditorGUILayout.LabelField("最大值", GUILayout.Width(40));
@@ -93,6 +96,7 @@ public class TableRulesTypeCommon : ITableType {
         foreach (var field in fieldDic) {
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField(field.Key, GUILayout.Width(70));
+            EditorGUILayout.LabelField(GetFieldDisplayName(field.Key), GUILayout.Width(70));
             // 数据类型
             var enumFieldTp = fieldDic[field.Key];
             var fieldData = tableRule.defaultData.fieldList.Find((x) => x.fieldName == field.Key);
@@ -588,36 +592,39 @@ public class TableRulesTypeCommon : ITableType {
 
     private void AnalyzeyData() {
         var filePath = TableUtil.GetFilePath(tableRule.name);
-        var config = new CsvConfiguration(CultureInfo.InvariantCulture);
-        using var reader = new StreamReader(filePath, Encoding.UTF8);
-        using var csv = new CsvReader(reader, config);
-        // 读取 CSV 并解析成动态对象
-        var records = csv.GetRecords<dynamic>();
+        using var csv = TableCsvEditorUtil.CreateCsvReader(filePath);
+        var headerData = TableCsvEditorUtil.ReadHeaderData(csv);
+        fieldNameDisplayDic.Clear();
+        foreach (var header in headerData.HeaderList) {
+            fieldNameDisplayDic[header] = headerData.GetDisplayName(header);
+        }
         // 提前判断最大值获取
         var fieldDicTp = tableRule != null ? tableRule.defaultData.fieldList.FindAll((x)=> x.isMaxValue).ToDictionary((x)=>x.fieldName) : new Dictionary<string, TableRules.TableField>();
         // 提前判断本地化数据获取
-         var localizeKey = tableRule != null ? tableRule.defaultData.fieldList.FindAll((x)=> x.isLocalize).ToDictionary((x)=>x.fieldName) : new Dictionary<string, TableRules.TableField>();
+        var localizeKey = tableRule != null ? tableRule.defaultData.fieldList.FindAll((x)=> x.isLocalize).ToDictionary((x)=>x.fieldName) : new Dictionary<string, TableRules.TableField>();
+        tableDataDic.Clear();
+        tableLocalizeDic.Clear();
         // 遍历所有行
         string rowId = "";
-        foreach (var record in records) {
-            // 每个字段数据,只获取第一行数据
-            foreach (var kvp in (IDictionary<string, object>)record) {
-                if (kvp.Key == "Id") {
-                    rowId = kvp.Value.ToString();
+        while (csv.Read()) {
+            foreach (var header in headerData.HeaderList) {
+                var fieldValue = csv.GetField(header) ?? string.Empty;
+                if (header == "Id") {
+                    rowId = fieldValue;
                 }
-                if (!tableDataDic.ContainsKey(kvp.Key)) {
-                    tableDataDic.Add(kvp.Key, new List<string>());
+                if (!tableDataDic.ContainsKey(header)) {
+                    tableDataDic.Add(header, new List<string>());
                 }
-                if (fieldDicTp.ContainsKey(kvp.Key)) {
-                    tableDataDic[kvp.Key].Add(kvp.Value.ToString());
+                if (fieldDicTp.ContainsKey(header)) {
+                    tableDataDic[header].Add(fieldValue);
                 }
-                if (localizeKey.ContainsKey(kvp.Key)) {
-                    if (!tableLocalizeDic.ContainsKey(kvp.Key)) {
-                        tableLocalizeDic[kvp.Key] = new List<tableLocalizeValue>();
+                if (localizeKey.ContainsKey(header)) {
+                    if (!tableLocalizeDic.ContainsKey(header)) {
+                        tableLocalizeDic[header] = new List<tableLocalizeValue>();
                     }
-                    tableLocalizeDic[kvp.Key].Add(new tableLocalizeValue() {
+                    tableLocalizeDic[header].Add(new tableLocalizeValue() {
                         Id = rowId,
-                        Text = kvp.Value.ToString()
+                        Text = fieldValue
                     });
                 }
             }
@@ -669,13 +676,24 @@ public class TableRulesTypeCommon : ITableType {
             }else {
                 strField = string.Format($"public {fileType} {field.fieldName} {{{{ get; set; }}}}");
             }
-            fieldContent += strField;
+            var fieldDisplayName = SecurityElement.Escape(GetFieldDisplayName(field.fieldName)) ?? field.fieldName;
+            fieldContent += $"/// <summary>\r\n\t\t/// {fieldDisplayName}\r\n\t\t/// </summary>\r\n\t\t{strField}";
             addCount += 1;
             if (addCount < existList.Count) {
                 fieldContent += "\r\n\t\t";
             }
         }
         keyReplaceDic.Add("#SCRIPTFIELD#", fieldContent);
+    }
+
+    /// <summary>
+    /// 获取字段名称
+    /// </summary>
+    private string GetFieldDisplayName(string fieldName) {
+        if (fieldNameDisplayDic.TryGetValue(fieldName, out var displayName) && !string.IsNullOrWhiteSpace(displayName)) {
+            return displayName;
+        }
+        return fieldName;
     }
 
     #region ConfigDic
@@ -1002,6 +1020,7 @@ public class TableRulesTypeCommon : ITableType {
     private bool keyFoldout = true;
     private bool relateFoldout = true;
     private readonly Dictionary<string, TableUtil.FieldType> fieldDic = new();
+    private readonly Dictionary<string, string> fieldNameDisplayDic = new();
     private readonly Dictionary<string, List<string>> tableDataDic = new();
     private readonly Dictionary<string, List<tableLocalizeValue>> tableLocalizeDic = new();
     private List<string> relateTableList = new();

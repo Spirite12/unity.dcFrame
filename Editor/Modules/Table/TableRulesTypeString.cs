@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
-using System.Linq;
-using System.Text;
-using CsvHelper;
-using CsvHelper.Configuration;
 using DCFrame;
 using UnityEditor;
 using UnityEditor.Localization;
@@ -17,11 +12,14 @@ public class TableRulesTypeString : ITableType {
     /// </summary>
     public bool Init(TableRules.TableRule tableRule) {
         this.tableRule = tableRule;
+        tableList.Clear();
         try {
-            var config = new CsvConfiguration(CultureInfo.InvariantCulture);
-            using var reader = new StreamReader(TableUtil.GetFilePath(tableRule.name), Encoding.UTF8);
-            var csv = new CsvReader(reader, config);
-            tableList = csv.GetRecords<TableStringClass>().ToList();
+            using var csv = TableCsvEditorUtil.CreateCsvReader(TableUtil.GetFilePath(tableRule.name));
+            TableCsvEditorUtil.ReadHeaderData(csv);
+            tableList = new List<TableStringClass>();
+            while (csv.Read()) {
+                tableList.Add(csv.GetRecord<TableStringClass>());
+            }
             return true;
         }
         catch (Exception ex) {
