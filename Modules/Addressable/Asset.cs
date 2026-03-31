@@ -57,7 +57,7 @@ namespace DCFrame {
             AssetDic[address] = new AssetRef {
                 handle = handle,
                 count = count,
-                releaseTime = -1f
+                releaseTime = count > 0 ? -1f : Time.realtimeSinceStartup
             };
         }
         
