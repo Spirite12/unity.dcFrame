@@ -18,7 +18,7 @@ namespace DCFrame {
 
 		private void Awake() {
 			GCCollect.Init();
-			TextFilter.InitFilterFile();
+			TextFilter.Init();
 			UIMgr.Instance.Init(tsfActiveRoot, tsfDeActiveRoot, uiCamera);
 			CacheMgr.Init();
 		}
@@ -41,6 +41,7 @@ namespace DCFrame {
 			isPaused = false;
 			OnApplicationQuitEvent?.Invoke();
 			GCCollect.Destroy();
+			TextFilter.Destroy();
 			UIMgr.Instance.Shut();
 			EventMgr.Clear();
 			CacheMgr.Destroy();

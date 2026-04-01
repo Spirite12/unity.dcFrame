@@ -24,10 +24,6 @@ namespace DCFrame {
             /// 简体
             /// </summary>
             ZhCN,
-            /// <summary>
-            /// 英文
-            /// </summary>
-            EN,
         }
         
         /// <summary>
@@ -35,7 +31,6 @@ namespace DCFrame {
         /// </summary>
         public static readonly Dictionary<LocaleCode, string> LocaleCodeDic = new() {
             { LocaleCode.ZhCN, "zh-CN" },
-            { LocaleCode.EN, "en" },
         };
     }
 }
