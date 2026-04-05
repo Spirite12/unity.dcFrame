@@ -6,6 +6,11 @@ public interface  ITableType {
     /// </summary>
     public abstract bool Init(TableRules.TableRule tableRule);
     /// <summary>
+    /// 初始化Editor数据
+    /// </summary>
+    /// <param name="rulesEditor"></param>
+    public abstract void InitEditor(TableRulesEditor rulesEditor);
+    /// <summary>
     /// 销毁数据
     /// </summary>
     public abstract void Destroy();

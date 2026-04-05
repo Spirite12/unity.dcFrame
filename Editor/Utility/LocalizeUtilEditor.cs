@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using DCFrame;
 using DCFrame.Utility;
 using UnityEditor;
@@ -40,7 +40,7 @@ public class LocalizeUtilEditor : Editor {
         }
         
         StringTable zhTable = null;
-        var cnCode = LocalizeConst.LocaleCodeDic[LocalizeConst.EnumLocaleCode.ZhCN];
+        var cnCode = LocalizeConst.LocaleCodeDic[LocalizeConst.LocaleCode.ZhCN];
         foreach (var table in collection.StringTables) {
             if (table.LocaleIdentifier.Code == cnCode) {
                 zhTable = table;

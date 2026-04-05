@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -12,7 +12,7 @@ using FileUtil = DCFrame.Utility.FileUtil;
 [CustomEditor(typeof(TableRules))]
 public class TableRulesEditor : Editor {
     private void OnEnable() {
-        tableRules = AssetDatabase.LoadAssetAtPath<TableRules>(Asset.GetAssetPath("Table/TableRules", Asset.EnumPrefixPath.Settings));
+        tableRules = AssetDatabase.LoadAssetAtPath<TableRules>(Asset.GetAssetPath("Table/TableRules", Asset.PrefixPath.Settings));
         if (tableRules && tableRules.tableRuleList.Count > 0) {
             tableRules.tableRuleList.Sort((x, y) => string.Compare(x.name, y.name, StringComparison.OrdinalIgnoreCase));
         }
@@ -42,6 +42,19 @@ public class TableRulesEditor : Editor {
         DrawDefaultInspector();
         RenderTableInfo();
     }
+    
+    #region 提供 tableType 调用的函数
+
+    /// <summary>
+    /// 跳转配置
+    /// </summary>
+    public void JumpConfig(string tableName) {
+        findTableName = tableName;
+        RenderFindConfig();
+    }
+    
+    
+    #endregion
 
     #region ConfigInfo
 
@@ -70,18 +83,22 @@ public class TableRulesEditor : Editor {
         if (!isForce && lastSelectIndex == selectIndex && lastEnumTableType == tableRule.enumTableType) {
             return;
         }
+        if (lastSelectIndex != selectIndex) {
+            previousSelectIndex = lastSelectIndex;
+        }
         tableType?.Destroy();
         switch (tableRule.enumTableType) {
-            case TableUtil.EnumTableType.Default:
+            case TableUtil.TableType.Default:
                 tableType = new TableRulesTypeCommon();
+                tableType.InitEditor(this);
                 break;
-            case TableUtil.EnumTableType.Const:
+            case TableUtil.TableType.Const:
                 tableType = new TableRulesTypeConst();
                 break;
-            case TableUtil.EnumTableType.Enum:
+            case TableUtil.TableType.Enum:
                 tableType = new TableRulesTypeEnum();
                 break;
-            case TableUtil.EnumTableType.String:
+            case TableUtil.TableType.String:
                 tableType = new TableRulesTypeString();
                 break;
             default:
@@ -147,9 +164,10 @@ public class TableRulesEditor : Editor {
         GUILayout.Space(16);
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("表列表: ", GUILayout.Width(120));
-        List<string> nameList = new List<string>();
-        foreach (var rule in tableRules.tableRuleList) {
-            nameList.Add(rule.name.Replace("Table", ""));
+        if (nameList.Count <= 0) {
+            foreach (var rule in tableRules.tableRuleList) {
+                nameList.Add(rule.name.Replace("Table", ""));
+            }
         }
         selectIndex = EditorGUILayout.Popup(selectIndex, nameList.ToArray());
         EditorGUILayout.EndHorizontal();
@@ -158,8 +176,8 @@ public class TableRulesEditor : Editor {
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("表类型: ", GUILayout.Width(120));
         var tableRule = tableRules.tableRuleList[selectIndex];
-        var typeList = CommonUtil.GetEnumDescriptions<TableUtil.EnumTableType>();
-        tableRule.enumTableType = (TableUtil.EnumTableType)EditorGUILayout.Popup((int)tableRule.enumTableType, typeList.ToArray());
+        var typeList = CommonUtil.GetEnumDescriptions<TableUtil.TableType>();
+        tableRule.enumTableType = (TableUtil.TableType)EditorGUILayout.Popup((int)tableRule.enumTableType, typeList.ToArray());
         EditorGUILayout.EndHorizontal();
     }
 
@@ -376,26 +394,35 @@ public class TableRulesEditor : Editor {
     /// 渲染提示说明
     /// </summary>
     private void RenderBtnTips() {
+        GUILayout.BeginHorizontal();
         if (GUILayout.Button("提示说明")) {
             string str = "";
             str += String.Format($"CSV配表不允许使用科学计数法，若要使用大数字，则在前方新增 {TableUtil.ScientificSign} 字符\n\n");
             str += "删除无用表配置：\n依次查找配置对应的表文件，若查询无果则删除\n\n";
             str += String.Format($"生成查找数据函数：\n" +
-                                 $"{CommonUtil.GetDescription(TableUtil.EnumKeyType.Single)}：生成只有单Key相关表代码\n" +
-                                 $"{CommonUtil.GetDescription(TableUtil.EnumKeyType.Multi)}：生成多key的相关表代码\n" +
-                                 $"{CommonUtil.GetDescription(TableUtil.EnumKeyType.MultiWithList)}：递增生成多key的相关表代码\n\n");
+                                 $"{CommonUtil.GetDescription(TableUtil.KeyType.Single)}：生成只有单Key相关表代码\n" +
+                                 $"{CommonUtil.GetDescription(TableUtil.KeyType.Multi)}：生成多key的相关表代码\n" +
+                                 $"{CommonUtil.GetDescription(TableUtil.KeyType.MultiWithList)}：递增生成多key的相关表代码\n\n");
             str += String.Format($"获取最大值：\n获取当前表字段数据内最大值并构造字段\n\n");
             EditorUtility.DisplayDialog("说明介绍", str, "关闭");
         }
+        if (previousSelectIndex != -1 && previousSelectIndex != selectIndex) {
+            if (GUILayout.Button("跳转上一个表")) {
+                selectIndex = previousSelectIndex;
+            }
+        }
+        GUILayout.EndHorizontal();
         GUILayout.Space(5);
     }
 
     #endregion
 
-    private TableRules tableRules;
+    public TableRules tableRules;
     private ITableType tableType;
+    private int previousSelectIndex = -1;
     private int lastSelectIndex = -1;
-    private TableUtil.EnumTableType lastEnumTableType;
+    private readonly List<string> nameList = new();
+    private TableUtil.TableType lastEnumTableType;
     /// <summary>
     /// 所选择的列表
     /// </summary>

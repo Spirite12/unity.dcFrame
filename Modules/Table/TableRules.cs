@@ -15,7 +15,7 @@ namespace DCFrame {
             /// <summary>
             /// 表类型
             /// </summary>
-            public TableUtil.EnumTableType enumTableType = TableUtil.EnumTableType.Default;
+            public TableUtil.TableType enumTableType = TableUtil.TableType.Default;
             /// <summary>
             /// 默认表数据
             /// </summary>
@@ -48,6 +48,10 @@ namespace DCFrame {
             /// 本地化的Key
             /// </summary>
             public string localizeKey = "";
+            /// <summary>
+            /// 标注
+            /// </summary>
+            public string remark = "";
         }
 
         [System.Serializable]
@@ -59,7 +63,7 @@ namespace DCFrame {
             /// <summary>
             /// 字段类型
             /// </summary>
-            public TableUtil.EnumFieldType enumField = TableUtil.EnumFieldType.Int;
+            public TableUtil.FieldType enumField = TableUtil.FieldType.Int;
             /// <summary>
             /// 是否本地化
             /// </summary>
@@ -71,11 +75,27 @@ namespace DCFrame {
             /// <summary>
             /// 多键查询枚举
             /// </summary>
-            public TableUtil.EnumKeyType enumMainViceKey = TableUtil.EnumKeyType.None;
+            public TableUtil.KeyType enumMainViceKey = TableUtil.KeyType.None;
             /// <summary>
             /// 多键字段列表
             /// </summary>
             public List<string> fieldKeyList = new List<string>();
+            /// <summary>
+            /// 表关联列表
+            /// </summary>
+            public List<TableFieldRelate> fieldRelateList = new List<TableFieldRelate>();
+        }
+        
+        [System.Serializable]
+        public class TableFieldRelate {
+            /// <summary>
+            /// 表关联名
+            /// </summary>
+            public string tableName = "";
+            /// <summary>
+            /// 表关联字段
+            /// </summary>
+            public string fieldName = "";
         }
     }
 }

@@ -1,24 +1,104 @@
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
+using Object = UnityEngine.Object;
 
 namespace DCFrame {
     public class Asset {
         /// <summary>
-        /// 根据地址动态加载资源
+        /// 根据地址加载资源
         /// </summary>
-        public static async UniTask<object> LoadAsset(string address) {
-            // 获取扩展名并判断是否支持
-            string extension = Path.GetExtension(address).ToLower();
-            if (!ExtensionDic.TryGetValue(extension, out Func<string, UniTask<object>> loadFunc)) {
-                Debug.LogError($"暂未支持当前后缀名格式： {extension}");
+        public static async UniTask<T> LoadAsset<T>(string address) where T : Object {
+            // 获取是否已经加载到
+            if (AssetDic.TryGetValue(address, out var assetRef)) {
+                assetRef.count = Mathf.Max(0, assetRef.count) + 1;
+                assetRef.releaseTime = -1f;
+                return assetRef.handle.Result as T;
+            }
+            // 获取是否正在加载中
+            if (LoadingDic.TryGetValue(address, out var loadingRef)) {
+                loadingRef.count = Mathf.Max(0, loadingRef.count) + 1;
+                await loadingRef.handle.Task;
+                if (loadingRef.handle.Status != AsyncOperationStatus.Succeeded) {
+                    Debug.LogError($"加载资源失败，地址是: {address}");
+                    return null;
+                }
+                if (!AssetDic.TryGetValue(address, out var loadedAssetRef)) {
+                    GetAssetRef(address, loadingRef.handle, loadingRef.count);
+                    LoadingDic.Remove(address);
+                    loadedAssetRef = AssetDic[address];
+                }
+                return loadedAssetRef.handle.Result as T;
+            }
+            // 加载一个新的
+            var handle = Addressables.LoadAssetAsync<T>(address);
+            var pendingRef = new LoadingRef {
+                handle = handle,
+                count = 1
+            };
+            LoadingDic[address] = pendingRef;
+            await handle.Task;
+            LoadingDic.Remove(address);
+            if (handle.Status != AsyncOperationStatus.Succeeded) {
+                Debug.LogError($"加载资源失败，地址是: {address}");
                 return null;
             }
-            return await loadFunc.Invoke(address);
+            GetAssetRef(address, handle, pendingRef.count);
+            return handle.Result;
+        }
+
+        /// <summary>
+        /// 获取一个实例
+        /// </summary>
+        private static void GetAssetRef(string address, AsyncOperationHandle handle, int count) {
+            AssetDic[address] = new AssetRef {
+                handle = handle,
+                count = count,
+                releaseTime = count > 0 ? -1f : Time.realtimeSinceStartup
+            };
+        }
+        
+        /// <summary>
+        /// 根据地址卸载资源
+        /// </summary>
+        public static void Release(string address) {
+            if (!AssetDic.TryGetValue(address, out var assetRef)) {
+                Debug.LogWarning($"未找到资源: {address}");
+                return;
+            }
+            assetRef.count--;
+            if (assetRef.count > 0) {
+                return;
+            }
+            assetRef.count = 0;
+            assetRef.releaseTime = Time.realtimeSinceStartup;
+        }
+        
+        /// <summary>
+        /// 释放计时处理
+        /// </summary>
+        public static void FixedUpdate() {
+            if (AssetDic.Count == 0) {
+                return;
+            }
+            var now = Time.realtimeSinceStartup;
+            removeList.Clear();
+            foreach (var kv in AssetDic) {
+                var assetRef = kv.Value;
+                if (assetRef.count != 0 || assetRef.releaseTime < 0f) {
+                    continue;
+                }
+                if (now - assetRef.releaseTime >= ReleaseDelay) {
+                    Addressables.Release(assetRef.handle);
+                    removeList.Add(kv.Key);
+                }
+            }
+            for (int i = 0; i < removeList.Count; i++) {
+                AssetDic.Remove(removeList[i]);
+            }
         }
 
         #region 加载前缀和函数
@@ -26,9 +106,9 @@ namespace DCFrame {
         /// <summary>
         /// 项目前缀地址
         /// </summary>
-        public enum EnumPrefixPath {
+        public enum PrefixPath {
             Single = 0,
-            Game = 1,
+            GamePrefab = 1,
             Settings = 2,
             ScriptTemplates = 3,
         }
@@ -36,127 +116,91 @@ namespace DCFrame {
         /// <summary>
         /// 前缀与地址的映射
         /// </summary>
-        private static readonly Dictionary<EnumPrefixPath, string> PrefixPathDic = new() {
-            { EnumPrefixPath.Single, "Assets/Simple/"},
-            { EnumPrefixPath.Game, "Assets/Game/Prefabs/"},
-            { EnumPrefixPath.Settings, "Assets/Game/Settings/"},
-            { EnumPrefixPath.ScriptTemplates, "Tools/ScriptTemplates/"}
+        private static readonly Dictionary<PrefixPath, string> PrefixPathDic = new() {
+            { PrefixPath.Single, "Assets/Simple/"},
+            { PrefixPath.GamePrefab, "Assets/Game/Prefabs/"},
+            { PrefixPath.Settings, "Assets/Game/Settings/"},
+            { PrefixPath.ScriptTemplates, "Tools/ScriptTemplates/"}
         };
+        
+        /// <summary>
+        /// 获取资源加载地址
+        /// </summary>
+        public static string GetPath(string path, PrefixPath enumPrefix = PrefixPath.GamePrefab) {
+            if (!PrefixPathDic.TryGetValue(enumPrefix, out string prefixPath)) {
+                Debug.LogError($"暂未支持当前前缀枚举： {enumPrefix}");
+                return "";
+            }
+            return Path.Combine(prefixPath, path).Replace("\\", "/");
+        }
         
         /// <summary>
         /// 获取贴图加载地址
         /// </summary>
-        public static string GetSpritePath(string path, EnumPrefixPath enumPrefix = EnumPrefixPath.Game) {
-            if (!PrefixPathDic.TryGetValue(enumPrefix, out string prefixPath)) {
-                ErrorPrefixPathTips(enumPrefix);
-                return "";
-            }
-            return Path.Combine(prefixPath, $"{path}.png");;
+        public static string GetSpritePath(string path, PrefixPath enumPrefix = PrefixPath.GamePrefab) {
+            return GetPath(path + ".png", enumPrefix);
         }
         
         /// <summary>
         /// 获取文本加载地址
         /// </summary>
-        public static string GetTxtPath(string path, EnumPrefixPath enumPrefix = EnumPrefixPath.Game) {
-            if (!PrefixPathDic.TryGetValue(enumPrefix, out string prefixPath)) {
-                ErrorPrefixPathTips(enumPrefix);
-                return "";
-            }
-            return Path.Combine(prefixPath, $"{path}.txt");;
+        public static string GetTxtPath(string path, PrefixPath enumPrefix = PrefixPath.GamePrefab) {
+            return GetPath(path + ".txt", enumPrefix);
         }
         
         /// <summary>
         /// 获取预制件加载地址
         /// </summary>
-        public static string GetPrefabPath(string path, EnumPrefixPath enumPrefix = EnumPrefixPath.Game) {
-            if (!PrefixPathDic.TryGetValue(enumPrefix, out string prefixPath)) {
-                ErrorPrefixPathTips(enumPrefix);
-                return "";
-            }
-            return Path.Combine(prefixPath, $"{path}.prefab");;
+        public static string GetPrefabPath(string path, PrefixPath enumPrefix = PrefixPath.GamePrefab) {
+            return GetPath(path + ".prefab", enumPrefix);
         }
         
         /// <summary>
         /// 获取资源加载地址
         /// </summary>
-        public static string GetAssetPath(string path, EnumPrefixPath enumPrefix = EnumPrefixPath.Game) {
-            if (!PrefixPathDic.TryGetValue(enumPrefix, out string prefixPath)) {
-                ErrorPrefixPathTips(enumPrefix);
-                return "";
-            }
-            return Path.Combine(prefixPath, $"{path}.asset");;
-        }
-
-        private static void ErrorPrefixPathTips(EnumPrefixPath enumPrefix) {
-            Debug.LogError($"暂未支持当前前缀枚举： {enumPrefix}");
+        public static string GetAssetPath(string path, PrefixPath enumPrefix = PrefixPath.GamePrefab) {
+            return GetPath(path + ".asset", enumPrefix);
         }
 
         #endregion
         
-        #region 获取扩展名和函数
         
         /// <summary>
-        /// 扩展名与加载函数的映射
+        /// 资源计数
         /// </summary>
-        private static readonly Dictionary<string, Func<string, UniTask<object>>> ExtensionDic = new(){ 
-            { ".png", LoadAssetSprite },
-            { ".txt", LoadAssetTxt },
-            { ".prefab", LoadAssetPrefab },
-            { ".asset", LoadAssetAsset },
-        };
+        private static readonly Dictionary<string, AssetRef> AssetDic = new();
+        private static readonly Dictionary<string, LoadingRef> LoadingDic = new();
+        private static readonly List<string> removeList = new();
+        /// <summary>
+        /// 资源释放时间
+        /// </summary>
+        private const float ReleaseDelay = 60f;
 
         /// <summary>
-        /// 加载 类型 资源
+        /// 资源引用类
         /// </summary>
-        private static async UniTask<object> LoadAssetAsset(string address) {
-            var handle = Addressables.LoadAssetAsync<Asset>(address);
-            await handle.Task;
-            if (handle.Status != AsyncOperationStatus.Succeeded) {
-                Debug.LogError($"加载资源失败，地址是: {address}");
-                return null;
-            }
-            return handle.Result;
+        private class AssetRef {
+            /// <summary>
+            /// 资源句柄
+            /// </summary>
+            public AsyncOperationHandle handle;
+            /// <summary>
+            /// 引用次数
+            /// </summary>
+            public int count;
+            /// <summary>
+            /// 释放时间
+            /// </summary>
+            public float releaseTime;
         }
 
         /// <summary>
-        /// 加载 预制件 类型资源
+        /// 正在加载中的资源引用
         /// </summary>
-        private static async UniTask<object> LoadAssetPrefab(string address) {
-            var handle = Addressables.LoadAssetAsync<GameObject>(address);
-            await handle.Task;
-            if (handle.Status != AsyncOperationStatus.Succeeded) {
-                Debug.LogError($"加载Prefab失败，地址是: {address}");
-                return null;
-            }
-            return handle.Result;
+        private class LoadingRef {
+            public AsyncOperationHandle handle;
+            public int count;
         }
 
-        /// <summary>
-        /// 加载 文本 类型资源
-        /// </summary>
-        private static async UniTask<object> LoadAssetTxt(string address) {
-            var handle = Addressables.LoadAssetAsync<TextAsset>(address);
-            await handle.Task;
-            if (handle.Status != AsyncOperationStatus.Succeeded) {
-                Debug.LogError($"加载Txt失败，地址是: {address}");
-                return null;
-            }
-            return handle.Result;
-        }
-
-        /// <summary>
-        /// 加载 Sprite 类型资源
-        /// </summary>
-        private static async UniTask<object> LoadAssetSprite(string address) {
-            var handle = Addressables.LoadAssetAsync<Sprite>(address);
-            await handle.Task;
-            if (handle.Status != AsyncOperationStatus.Succeeded) {
-                Debug.LogError($"加载Sprite失败，地址是: {address}");
-                return null;
-            }
-            return handle.Result;
-        }
-
-        #endregion
     }
 }

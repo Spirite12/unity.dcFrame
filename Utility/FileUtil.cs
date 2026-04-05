@@ -97,7 +97,9 @@ namespace DCFrame.Utility {
                 Debug.LogError("ReadFile Path is Not Exist : " + path);
                 return "";
             }
-            path = GetFullPath(path);
+            if (!isFullPath) {
+                path = GetFullPath(path);
+            }
             string strContent = File.ReadAllText(path);
 #if !UNITY_EDITOR
             if (isEncrypt) {

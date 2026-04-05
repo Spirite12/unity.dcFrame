@@ -8,7 +8,7 @@ namespace DCFrame {
         /// <summary>
         /// 本地记录类型
         /// </summary>
-        public enum EnumSaveType {
+        public enum SaveType {
             /// <summary>
             /// 玩家ID
             /// </summary>
@@ -61,18 +61,22 @@ namespace DCFrame {
         /// <summary>
         /// 获取项目组本地记录类型值
         /// </summary>
-        public static string GetSaveTypeValue(EnumSaveType enumSaveType) {
+        public static string GetSaveTypeValue(SaveType enumSaveType) {
             string value = "";
             switch (enumSaveType) {
-                case EnumSaveType.PlayerId:
+                case SaveType.PlayerId:
                     value = funcPlayer?.Invoke();
                     break;
-                case EnumSaveType.Account:
+                case SaveType.Account:
                     value = funcAccount?.Invoke();
                     break;
-                case EnumSaveType.Server:
+                case SaveType.Server:
                     value = funcServer?.Invoke();
                     break;
+            }
+            if (value == null || string.IsNullOrEmpty(value)) {
+                Debug.LogError($"enumSaveType 为：{enumSaveType} 的对应回调返回错误");
+                return "";
             }
             return value;
         }

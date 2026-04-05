@@ -24,7 +24,7 @@ public class AnimationOpEditor : EditorWindow {
         currentPath = AssetDatabase.GetAssetPath(selectObject);
         bool isAnim = Path.GetExtension(currentPath) == ".anim";
         bool isFolderPath = !Path.HasExtension(currentPath);
-        enumPopEnum = isFolderPath ? EnumPopEnum.Folder : EnumPopEnum.Anim;
+        enumPopEnum = isFolderPath ? PopEnum.Folder : PopEnum.Anim;
         return isAnim || isFolderPath;
     }
 
@@ -32,11 +32,11 @@ public class AnimationOpEditor : EditorWindow {
         GUILayout.Space(12);
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("Select Type:", GUILayout.Width(150));
-        enumPopEnum = (EnumPopEnum)EditorGUILayout.EnumPopup(enumPopEnum);
+        enumPopEnum = (PopEnum)EditorGUILayout.EnumPopup(enumPopEnum);
         EditorGUILayout.EndHorizontal();
 
         GUILayout.Space(12);
-        if (enumPopEnum == EnumPopEnum.Anim) {
+        if (enumPopEnum == PopEnum.Anim) {
             animationClip = EditorGUILayout.ObjectField("Select Anim :", selectObject, typeof(AnimationClip), false) as AnimationClip;
             selectObject = animationClip;
         } else {
@@ -52,7 +52,7 @@ public class AnimationOpEditor : EditorWindow {
 
         GUILayout.Space(12);
         EditorGUILayout.LabelField("Other Setting", GUILayout.Width(150));
-        if (enumPopEnum == EnumPopEnum.Folder) {
+        if (enumPopEnum == PopEnum.Folder) {
             isOutPut = GUILayout.Toggle(isOutPut, new GUIContent("Export File", "Is Export Optimize Content To File \n是否导出优化内容到文件内"));
         } else {
             isOutPut = GUILayout.Toggle(isOutPut, new GUIContent("Export Console", "Is Export Optimize Content To Console \n是否导出优化内容到控制台内"));
@@ -70,7 +70,7 @@ public class AnimationOpEditor : EditorWindow {
     /// 开始处理动效
     /// </summary>
     private void StartDealClip() {
-        if (enumPopEnum == EnumPopEnum.Anim) {
+        if (enumPopEnum == PopEnum.Anim) {
             if (animationClip == null) {
                 EditorUtility.DisplayDialog("Error info", "请先赋值动画实例", "关闭");
                 return;
@@ -82,7 +82,7 @@ public class AnimationOpEditor : EditorWindow {
                 return;
             }
             OptimizeAnimationClip(animationClip);
-        } else if (enumPopEnum == EnumPopEnum.Folder) {
+        } else if (enumPopEnum == PopEnum.Folder) {
             if (!Directory.Exists(currentPath)) {
                 EditorUtility.DisplayDialog("Error info", "当前所选路径不是文件夹", "关闭");
                 return;
@@ -225,14 +225,14 @@ public class AnimationOpEditor : EditorWindow {
         p.Close();
     }
 
-    private enum EnumPopEnum {
+    private enum PopEnum {
         Anim,
         Folder
     }
     /// <summary>
     /// 当前选择的弹窗类型
     /// </summary>
-    private static EnumPopEnum enumPopEnum;
+    private static PopEnum enumPopEnum;
     /// <summary>
     /// 当前文件路径
     /// </summary>

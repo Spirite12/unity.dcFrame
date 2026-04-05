@@ -1,13 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
-using System.Linq;
-using System.Text;
-using CsvHelper;
-using CsvHelper.Configuration;
 using DCFrame;
-using DCFrame.Utility;
 using UnityEditor;
 using UnityEditor.Localization;
 using UnityEngine;
@@ -18,11 +12,14 @@ public class TableRulesTypeString : ITableType {
     /// </summary>
     public bool Init(TableRules.TableRule tableRule) {
         this.tableRule = tableRule;
+        tableList.Clear();
         try {
-            var config = new CsvConfiguration(CultureInfo.InvariantCulture);
-            using var reader = new StreamReader(TableUtil.GetFilePath(tableRule.name), Encoding.UTF8);
-            var csv = new CsvReader(reader, config);
-            tableList = csv.GetRecords<TableStringClass>().ToList();
+            using var csv = TableCsvEditorUtil.CreateCsvReader(TableUtil.GetFilePath(tableRule.name));
+            TableCsvEditorUtil.ReadHeaderData(csv);
+            tableList = new List<TableStringClass>();
+            while (csv.Read()) {
+                tableList.Add(csv.GetRecord<TableStringClass>());
+            }
             return true;
         }
         catch (Exception ex) {
@@ -30,6 +27,9 @@ public class TableRulesTypeString : ITableType {
             Debug.LogError($"CSV 解析文本表失败：{ex.Message}\n{ex.StackTrace}");
             return false;
         }
+    }
+
+    public void InitEditor(TableRulesEditor rulesEditor) {
     }
 
     public void Destroy() {
@@ -56,7 +56,7 @@ public class TableRulesTypeString : ITableType {
 #region 创建脚本
 
     public void OnDealWithFile() {
-        string path = Asset.GetTxtPath(TableUtil.TableClassTpString, Asset.EnumPrefixPath.ScriptTemplates);
+        string path = Asset.GetTxtPath(TableUtil.TableClassTpString, Asset.PrefixPath.ScriptTemplates);
         fileContent = File.ReadAllText(path);
         fileContent = fileContent.Replace("#SCRIPTNAME#", tableRule.name);
         var filePath = TableUtil.GetScriptPath(tableRule.name);
@@ -86,7 +86,7 @@ public class TableRulesTypeString : ITableType {
         }
         var cnDic = LocalizeUtilEditor.GetCollectionCnDic(collection);
         LocalizeUtilEditor.ClearCollection(collection);
-        var cnCode = LocalizeConst.LocaleCodeDic[LocalizeConst.EnumLocaleCode.ZhCN];
+        var cnCode = LocalizeConst.LocaleCodeDic[LocalizeConst.LocaleCode.ZhCN];
         foreach (var tableData in tableList) {
             var cnText = tableData.String;
             var key = $"{tableData.Sign}";

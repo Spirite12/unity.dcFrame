@@ -1,13 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
-using CsvHelper;
-using CsvHelper.Configuration;
 using DCFrame;
-using DCFrame.Utility;
 using UnityEditor;
 using UnityEditor.Localization;
 using UnityEngine;
@@ -15,11 +10,14 @@ using UnityEngine;
 public class TableRulesTypeEnum : ITableType {
     public bool Init(TableRules.TableRule tableRule) {
         this.tableRule = tableRule;
+        tableDic.Clear();
         try {
-            var config = new CsvConfiguration(CultureInfo.InvariantCulture);
-            using var reader = new StreamReader(TableUtil.GetFilePath(tableRule.name), Encoding.UTF8);
-            var csv = new CsvReader(reader, config);
-            var tableList = csv.GetRecords<TableEnumClass>().ToList();
+            using var csv = TableCsvEditorUtil.CreateCsvReader(TableUtil.GetFilePath(tableRule.name));
+            TableCsvEditorUtil.ReadHeaderData(csv);
+            var tableList = new List<TableEnumClass>();
+            while (csv.Read()) {
+                tableList.Add(csv.GetRecord<TableEnumClass>());
+            }
             foreach (var table in tableList) {
                 if (!tableDic.ContainsKey(table.EnumSign)) {
                     tableDic[table.EnumSign] = new TableDicValue() {
@@ -36,6 +34,8 @@ public class TableRulesTypeEnum : ITableType {
             Debug.LogError($"CSV 解析枚举表失败：{ex.Message}\n{ex.StackTrace}");
             return false;
         }
+    }
+    public void InitEditor(TableRulesEditor rulesEditor) {
     }
 
     public void Destroy() {
@@ -122,7 +122,7 @@ public class TableRulesTypeEnum : ITableType {
 #region 创建脚本
 
     public void OnDealWithFile() {
-        string path = Asset.GetTxtPath(TableUtil.TableClassTpEnum, Asset.EnumPrefixPath.ScriptTemplates);
+        string path = Asset.GetTxtPath(TableUtil.TableClassTpEnum, Asset.PrefixPath.ScriptTemplates);
         fileContent = File.ReadAllText(path);
         fileContent = fileContent.Replace("#SCRIPTNAME#", tableRule.name);
         var filePath = TableUtil.GetScriptPath(tableRule.name);
@@ -186,7 +186,7 @@ public class TableRulesTypeEnum : ITableType {
         }
         var cnDic = LocalizeUtilEditor.GetCollectionCnDic(collection);
         LocalizeUtilEditor.ClearCollection(collection);
-        var cnCode = LocalizeConst.LocaleCodeDic[LocalizeConst.EnumLocaleCode.ZhCN];
+        var cnCode = LocalizeConst.LocaleCodeDic[LocalizeConst.LocaleCode.ZhCN];
         foreach (var dic in tableDic) {
             if (dic.Value.tableTypeEnum is { isLocalize: true }) {
                 foreach (var tableClass in dic.Value.tableEnumList) {

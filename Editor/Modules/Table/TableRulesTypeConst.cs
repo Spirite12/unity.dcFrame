@@ -1,11 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
-using System.Linq;
-using System.Text;
-using CsvHelper;
-using CsvHelper.Configuration;
 using DCFrame;
 using UnityEngine;
 
@@ -15,11 +10,14 @@ public class TableRulesTypeConst : ITableType {
     /// </summary>
     public bool Init(TableRules.TableRule tableRule) {
         this.tableRule = tableRule;
+        tableList.Clear();
         try {
-            var config = new CsvConfiguration(CultureInfo.InvariantCulture);
-            using var reader = new StreamReader(TableUtil.GetFilePath(tableRule.name), Encoding.UTF8);
-            var csv = new CsvReader(reader, config);
-            tableList = csv.GetRecords<TableConstClass>().ToList();
+            using var csv = TableCsvEditorUtil.CreateCsvReader(TableUtil.GetFilePath(tableRule.name));
+            TableCsvEditorUtil.ReadHeaderData(csv);
+            tableList = new List<TableConstClass>();
+            while (csv.Read()) {
+                tableList.Add(csv.GetRecord<TableConstClass>());
+            }
             return true;
         }
         catch (Exception ex) {
@@ -27,6 +25,9 @@ public class TableRulesTypeConst : ITableType {
             Debug.LogError($"CSV 解析常量表失败：{ex.Message}\n{ex.StackTrace}");
             return false;
         }
+    }
+
+    public void InitEditor(TableRulesEditor rulesEditor) {
     }
 
     public void Destroy() {
@@ -48,7 +49,7 @@ public class TableRulesTypeConst : ITableType {
 #region 创建脚本
 
     public void OnDealWithFile() {
-        string path = Asset.GetTxtPath(TableUtil.TableClassTpConst, Asset.EnumPrefixPath.ScriptTemplates);
+        string path = Asset.GetTxtPath(TableUtil.TableClassTpConst, Asset.PrefixPath.ScriptTemplates);
         fileContent = File.ReadAllText(path);
         fileContent = fileContent.Replace("#SCRIPTNAME#", tableRule.name);
         var filePath = TableUtil.GetScriptPath(tableRule.name);

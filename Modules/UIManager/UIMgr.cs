@@ -158,7 +158,12 @@ namespace DCFrame {
             var targetIdx = 0;
             for (int i = uiRoot.childCount - 1; i >= 0; i--) {
                 var go = uiRoot.GetChild(i);
-                var childValue = go.GetComponent<UIOrder>().GetOrderValue();
+                var uiOrder = go.GetComponent<UIOrder>();
+                if (!uiOrder) {
+                    Debug.LogWarning($"UIOrder is missing on {go.name}, skip order compare.");
+                    continue;
+                }
+                var childValue = uiOrder.GetOrderValue();
                 if (childValue <= curLayer) {
                     targetIdx = i + 1;
                     break;
@@ -246,13 +251,14 @@ namespace DCFrame {
 				return;
 			}
 			for (var i = idx - 1; i >= 0;--i) {
-				if (!uiStack[i].IsReturnable()) {
+				var currentUI = uiStack[i];
+				if (!currentUI.IsReturnable()) {
 					uiStack.RemoveAt(i);
 				}
-				if (!uiStack[i].IsOpen()) {
+				if (!currentUI.IsOpen()) {
 					continue;
 				}
-				_ = uiStack[i].Close(false, false);
+				_ = currentUI.Close(false, false);
 			}
 		}
 
