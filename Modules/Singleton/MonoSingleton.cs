@@ -33,7 +33,7 @@ namespace DCFrame {
             }
         }
         protected virtual void OnDestroy() {
-            Release();
+            ReleaseAssetAll();
             mInstance = null;
         }
 
@@ -54,11 +54,25 @@ namespace DCFrame {
             }
             return asset;
         }
-
+        
         /// <summary>
         /// 释放资源
         /// </summary>
-        private void Release() {
+        protected void ReleaseAsset(string address) {
+            if (!addressRefDic.ContainsKey(address)) {
+                return;
+            }
+            addressRefDic[address] -= 1;
+            if (addressRefDic[address] <= 0) {
+                addressRefDic.Remove(address);
+            }
+            Asset.Release(address);
+        }
+
+        /// <summary>
+        /// 释放全部资源
+        /// </summary>
+        private void ReleaseAssetAll() {
             foreach (var kv in addressRefDic) {
                 for (int i = 0; i < kv.Value; i++) {
                     Asset.Release(kv.Key);
