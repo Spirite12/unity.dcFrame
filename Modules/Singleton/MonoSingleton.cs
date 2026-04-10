@@ -5,7 +5,7 @@ using UnityEngine;
 namespace DCFrame {
     public abstract class MonoSingleton<T> : MonoBehaviour where T : MonoSingleton<T> {
 
-        protected static T mInstance = null;
+        private static T mInstance = null;
         public static T Instance {
             get {
                 if (mInstance == null) {
