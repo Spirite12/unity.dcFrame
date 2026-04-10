@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace DCFrame {
+namespace DCFrame.Foundation {
     public class GCCollect {
         public static void Init() {
             lastCollectTime = Time.time;

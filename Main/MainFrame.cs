@@ -1,4 +1,5 @@
 using System;
+using DCFrame.Foundation;
 using UnityEngine;
 
 namespace DCFrame {

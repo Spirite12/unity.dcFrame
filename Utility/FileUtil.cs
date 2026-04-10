@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using DCFrame.Foundation;
 using UnityEngine;
 
 namespace DCFrame.Utility {
@@ -110,33 +111,17 @@ namespace DCFrame.Utility {
         }
 
         /// <summary>
-        /// 加密数据
+        /// 使用 XXTEA 加密数据，并输出为 Base64 字符串。
         /// </summary>
         public static string EncryptData(string strContent) {
-            Byte[] byteArray = Encoding.ASCII.GetBytes(strContent);
-            Byte[] byteKeyArray = Encoding.ASCII.GetBytes(EncryptKey);
-            string strEncrypt = "";
-            for (int i = 0; i < byteArray.Length; i++) {
-                strEncrypt +=(0xFF & byteArray[i]) + (0xFF & byteKeyArray[i % byteKeyArray.Length]);
-                if (i < byteArray.Length - 1) {
-                    strEncrypt += EncryptAddChar;
-                }
-            }
-            return strEncrypt;
+            return XXTEA.EncryptToBase64String(strContent, EncryptKey);
         }
 
         /// <summary>
-        /// 解密数据
+        /// 使用 XXTEA 解密 Base64 字符串。
         /// </summary>
         public static string DecryptData(string strContent) {
-            string[] byteArray = strContent.Split(EncryptAddChar);
-            Byte[] byteKeyArray = Encoding.ASCII.GetBytes(EncryptKey);
-            string strDecrypt = "";
-            for (int i = 0; i < byteArray.Length; i++) {
-                int byteValue = int.Parse(byteArray[i]) - (0xFF & byteKeyArray[i % byteKeyArray.Length]);
-                strDecrypt += Convert.ToChar(byteValue);
-            }
-            return strDecrypt;
+            return XXTEA.DecryptBase64StringToString(strContent, EncryptKey);
         }
         
         #endregion
@@ -163,7 +148,9 @@ namespace DCFrame.Utility {
 
         public const string RecordDirName = "Record";
 
-        private const char EncryptAddChar = '@';
+        /// <summary>
+        /// 文件工具默认使用的 XXTEA 密钥。
+        /// </summary>
         private const string EncryptKey = "DCFrame";
     }
 }

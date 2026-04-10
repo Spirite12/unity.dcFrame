@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DCFrame.Utility {
+namespace DCFrame.Foundation {
     /// <summary>
     /// 顺序流程控制器。
     /// 注册多个步骤后，当前步骤在完成时调用 CompleteStep，即可自动推进到下一步。
