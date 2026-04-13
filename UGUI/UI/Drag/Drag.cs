@@ -6,7 +6,7 @@ namespace DCFrame.UGUI {
     /// <summary>
     /// 拖拽控制器，负责按需创建拖拽中的 UI 实例并驱动位置更新。
     /// </summary>
-    public sealed class Drag<TTemplate, TData> : IDisposable, IDrag {
+    public sealed class Drag<TTemplate, TData> : IDrag {
         /// <summary>
         /// 当前拖拽中的 UI 节点。
         /// </summary>
@@ -37,6 +37,7 @@ namespace DCFrame.UGUI {
                 return;
             }
 
+            args.EventListener.BeginDragEvent += OnBeginDrag;
             args.EventListener.DragEvent += OnDrag;
             args.EventListener.EndDragEvent += OnEndDrag;
             isInitialized = true;
@@ -47,6 +48,7 @@ namespace DCFrame.UGUI {
         /// </summary>
         public void Destroy() {
             if (isInitialized) {
+                args.EventListener.BeginDragEvent -= OnBeginDrag;
                 args.EventListener.DragEvent -= OnDrag;
                 args.EventListener.EndDragEvent -= OnEndDrag;
                 isInitialized = false;
@@ -56,23 +58,28 @@ namespace DCFrame.UGUI {
         }
 
         /// <summary>
-        /// 实现 IDisposable，方便统一回收。
+        /// 处理开始拖拽回调，在允许开始时创建拖拽实例并同步初始位置。
         /// </summary>
-        public void Dispose() {
-            Destroy();
+        private void OnBeginDrag(PointerEventData eventData) {
+            if (isDragging) {
+                return;
+            }
+
+            TTemplate dragTemplate = CheckStartDragInternal(eventData);
+            if (ReferenceEquals(dragTemplate, null)) {
+                return;
+            }
+
+            CreateDragObjectInternal(dragTemplate);
+            ProcessDragging(eventData);
         }
 
         /// <summary>
-        /// 处理拖拽中回调，首次进入时会尝试创建拖拽实例。
+        /// 处理拖拽中回调，只负责更新拖拽实例位置。
         /// </summary>
         private void OnDrag(PointerEventData eventData) {
             if (!isDragging) {
-                TTemplate dragTemplate = CheckStartDragInternal(eventData);
-                if (ReferenceEquals(dragTemplate, null)) {
-                    return;
-                }
-
-                CreateDragObjectInternal(dragTemplate);
+                return;
             }
 
             ProcessDragging(eventData);
@@ -145,7 +152,6 @@ namespace DCFrame.UGUI {
         private void EndDragInternal() {
             DestroyDragObject();
             isDragging = false;
-            dragRectTransform = null;
             dragData = default;
         }
 
