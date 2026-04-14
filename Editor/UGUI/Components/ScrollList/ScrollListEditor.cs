@@ -16,6 +16,7 @@ namespace DCFrame.Editor.UGUI.Components.ScrollList {
         private SerializedProperty constraintCountProperty;
         private SerializedProperty axisProperty;
         private SerializedProperty isTopToBottomProperty;
+        private SerializedProperty useItemSizeDeltaProperty;
 
         /// <summary>
         /// 缓存序列化字段，供 Inspector 绘制时复用。
@@ -29,6 +30,7 @@ namespace DCFrame.Editor.UGUI.Components.ScrollList {
             constraintCountProperty = serializedObject.FindProperty("constraintCount");
             axisProperty = serializedObject.FindProperty("axis");
             isTopToBottomProperty = serializedObject.FindProperty("isTopToBottom");
+            useItemSizeDeltaProperty = serializedObject.FindProperty("useItemSizeDelta");
         }
 
         /// <summary>
@@ -49,6 +51,10 @@ namespace DCFrame.Editor.UGUI.Components.ScrollList {
 
             if (layoutType != ScrollListMono.LayoutType.Horizontal) {
                 EditorGUILayout.PropertyField(isTopToBottomProperty);
+            }
+
+            if (layoutType != ScrollListMono.LayoutType.Grid) {
+                EditorGUILayout.PropertyField(useItemSizeDeltaProperty);
             }
 
             if (layoutType == ScrollListMono.LayoutType.Grid) {

@@ -4,27 +4,19 @@ namespace DCFrame.UGUI {
     /// <summary>
     /// 列表项基类，业务层可继承并覆写刷新逻辑。
     /// </summary>
-    public class ScrollListItem : MonoBehaviour {
+    public class ScrollListItemMono : MonoBehaviour {
         /// <summary>
         /// 当前数据索引。
         /// </summary>
         public int Index => index;
-
         /// <summary>
         /// 当前绑定的数据对象。
         /// </summary>
         public object Data => data;
+        public RectTransform RectTransform => rectTransform;
 
-        /// <summary>
-        /// 当前节点的 RectTransform。
-        /// </summary>
-        public RectTransform RectTransform {
-            get {
-                if (!rectTransform) {
-                    rectTransform = transform as RectTransform;
-                }
-                return rectTransform;
-            }
+        void Awake() {
+            rectTransform = GetComponent<RectTransform>();
         }
 
         /// <summary>
@@ -37,18 +29,11 @@ namespace DCFrame.UGUI {
         }
 
         /// <summary>
-        /// 清空当前绑定状态，供虚拟列表回收时复位。
-        /// </summary>
-        public void ResetState() {
-            index = -1;
-            data = null;
-        }
-
-        /// <summary>
         /// 回收前的清理入口。
         /// </summary>
         public void Recycle() {
-            ResetState();
+            index = -1;
+            data = null;
             OnRecycle();
         }
 

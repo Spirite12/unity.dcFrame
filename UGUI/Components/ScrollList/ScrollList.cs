@@ -125,7 +125,7 @@ namespace DCFrame.UGUI {
                 return false;
             }
 
-            viewport = scrollRect.viewport != null ? scrollRect.viewport : scrollRect.transform as RectTransform;
+            viewport = scrollRect.viewport ? scrollRect.viewport : scrollRect.transform as RectTransform;
             if (!viewport) {
                 Debug.LogError("ScrollRect 缺少可用的 Viewport。", owner);
                 return false;
@@ -204,7 +204,7 @@ namespace DCFrame.UGUI {
             EnsurePoolSize(visibleDataIndices.Count);
 
             for (int i = 0; i < visibleDataIndices.Count; i++) {
-                ScrollListItem item = itemPool[i];
+                ScrollListItemMono item = itemPool[i];
                 int dataIndex = visibleDataIndices[i];
                 item.gameObject.SetActive(true);
                 item.RectTransform.anchoredPosition = visiblePositions[i];
@@ -337,7 +337,7 @@ namespace DCFrame.UGUI {
         /// </summary>
         private void EnsurePoolSize(int requiredCount) {
             while (itemPool.Count < requiredCount) {
-                ScrollListItem item = CreateItem(itemPool.Count);
+                ScrollListItemMono item = CreateItem(itemPool.Count);
                 if (item == null) {
                     break;
                 }
@@ -349,7 +349,7 @@ namespace DCFrame.UGUI {
         /// <summary>
         /// 创建单个可复用的列表项。
         /// </summary>
-        private ScrollListItem CreateItem(int poolIndex) {
+        private ScrollListItemMono CreateItem(int poolIndex) {
             GameObject itemObject = UnityEngine.Object.Instantiate(owner.goItem, content);
             itemObject.name = owner.goItem.name + "_" + poolIndex;
             itemObject.SetActive(false);
@@ -361,9 +361,9 @@ namespace DCFrame.UGUI {
                 return null;
             }
 
-            ScrollListItem item = itemObject.GetComponent<ScrollListItem>();
+            ScrollListItemMono item = itemObject.GetComponent<ScrollListItemMono>();
             if (item == null) {
-                item = itemObject.AddComponent<ScrollListItem>();
+                item = itemObject.AddComponent<ScrollListItemMono>();
             }
 
             return item;
@@ -680,7 +680,7 @@ namespace DCFrame.UGUI {
 
         private static readonly IList EmptyList = Array.Empty<object>();
         private readonly ScrollListMono owner;
-        private readonly List<ScrollListItem> itemPool = new();
+        private readonly List<ScrollListItemMono> itemPool = new();
         private readonly List<int> visibleDataIndices = new();
         private readonly List<Vector2> visiblePositions = new();
 

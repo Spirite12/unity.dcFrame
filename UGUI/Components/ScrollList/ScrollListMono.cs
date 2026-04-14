@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
@@ -17,14 +16,28 @@ namespace DCFrame.UGUI {
         public Vector2 spacing;
         [Tooltip("布局类型")]
         public LayoutType layoutType = LayoutType.Grid;
+        [Tooltip("垂直排列方向")]
+        public bool isTopToBottom = true;
+        
+        #region LayoutType.Grid
+
         [Tooltip("约束方式")]
         public GridLayoutGroup.Constraint constraint = GridLayoutGroup.Constraint.Flexible;
         [Tooltip("固定行列数量，只有固定约束时生效")]
         public int constraintCount = 1;
         [Tooltip("起始排列方向")]
         public GridLayoutGroup.Axis axis = GridLayoutGroup.Axis.Horizontal;
-        [Tooltip("垂直排列方向")]
-        public bool isTopToBottom = true;
+
+        #endregion
+
+        #region LayoutType.Horizontal and Vertical
+
+        [Tooltip("是否使用子预制件的宽高")]
+        public bool useItemSizeDelta;
+        
+        #endregion
+        
+        
         [HideInInspector]
         [Tooltip("滚动定位时每滑动多少距离耗时 0.1 秒")]
         public float tweenDistanceStep = 100f;
