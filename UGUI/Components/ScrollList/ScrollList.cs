@@ -167,7 +167,7 @@ namespace DCFrame.UGUI {
         /// 同步模板尺寸，作为布局计算的基础。
         /// </summary>
         private void UpdateItemSize() {
-            itemSize = templateRect.rect.size;
+            itemSize = owner.useItemSizeDelta ? templateRect.sizeDelta : templateRect.rect.size;
             stepSize = new Vector2(
                 Mathf.Max(1f, itemSize.x + owner.spacing.x),
                 Mathf.Max(1f, itemSize.y + owner.spacing.y));
@@ -556,7 +556,7 @@ namespace DCFrame.UGUI {
                 return 1f;
             }
 
-            float targetY = displayIndex * stepSize.y;
+            float targetY = owner.padding.top + displayIndex * stepSize.y;
             return 1f - Mathf.Clamp01(targetY / contentHeight);
         }
 
@@ -569,7 +569,7 @@ namespace DCFrame.UGUI {
                 return 0f;
             }
 
-            float targetX = displayIndex * stepSize.x;
+            float targetX = owner.padding.left + displayIndex * stepSize.x;
             return Mathf.Clamp01(targetX / contentWidth);
         }
 
@@ -594,7 +594,6 @@ namespace DCFrame.UGUI {
                 .To(() => scrollRect.verticalNormalizedPosition, value => scrollRect.verticalNormalizedPosition = value, normalized, duration)
                 .SetTarget(scrollRect)
                 .SetEase(Ease.OutCubic)
-                .OnUpdate(() => UpdateVisibleItems(false))
                 .OnComplete(() => {
                     scrollTween = null;
                     UpdateVisibleItems(true);
@@ -622,7 +621,6 @@ namespace DCFrame.UGUI {
                 .To(() => scrollRect.horizontalNormalizedPosition, value => scrollRect.horizontalNormalizedPosition = value, normalized, duration)
                 .SetTarget(scrollRect)
                 .SetEase(Ease.OutCubic)
-                .OnUpdate(() => UpdateVisibleItems(false))
                 .OnComplete(() => {
                     scrollTween = null;
                     UpdateVisibleItems(true);
@@ -666,7 +664,10 @@ namespace DCFrame.UGUI {
         /// </summary>
         private static int HashVisibleKey(int startIndex, int visibleCount) {
             unchecked {
-                return startIndex * 397 ^ visibleCount;
+                int hash = 17;
+                hash = hash * 31 + startIndex;
+                hash = hash * 31 + visibleCount;
+                return hash;
             }
         }
 

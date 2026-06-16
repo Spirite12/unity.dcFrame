@@ -15,7 +15,7 @@ namespace DCFrame.UGUI {
         public object Data => data;
         public RectTransform RectTransform => rectTransform;
 
-        void Awake() {
+        protected virtual void Awake() {
             rectTransform = GetComponent<RectTransform>();
         }
 
