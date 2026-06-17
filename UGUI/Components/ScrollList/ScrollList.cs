@@ -202,8 +202,9 @@ namespace DCFrame.UGUI {
 
             lastVisibleKey = visibleKey;
             EnsurePoolSize(visibleDataIndices.Count);
+            int activeItemCount = Mathf.Min(itemPool.Count, visibleDataIndices.Count);
 
-            for (int i = 0; i < visibleDataIndices.Count; i++) {
+            for (int i = 0; i < activeItemCount; i++) {
                 ScrollListItemMono item = itemPool[i];
                 int dataIndex = visibleDataIndices[i];
                 item.gameObject.SetActive(true);
@@ -215,7 +216,7 @@ namespace DCFrame.UGUI {
                 }
             }
 
-            HideUnusedItems(visibleDataIndices.Count);
+            HideUnusedItems(activeItemCount);
         }
 
         /// <summary>
