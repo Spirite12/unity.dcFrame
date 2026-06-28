@@ -35,7 +35,8 @@ public class AddressableProcessor : AssetPostprocessor {
             string fileName = Path.GetFileName(assetPath);
             string pattern = "^" + Regex.Escape(value).Replace("\\*", ".*").Replace("\\?", ".") + "$";
             if (Regex.IsMatch(fileName, pattern)) {
-                MarkAsAddressable(assetPath);
+                pathSingleLabelDic.TryGetValue(path, out var label);
+                MarkAsAddressable(assetPath, label);
             }
         }else if (Directory.Exists(assetPath)) {
             foreach (var keyValue in pathFolderDic) {
@@ -57,10 +58,11 @@ public class AddressableProcessor : AssetPostprocessor {
         if (AARules == null) {
             AARules = AssetDatabase.LoadAssetAtPath<AARules>(AAConst.AARulesPath);
         }
-        if (pathSingleDic != null && !isForce && pathFolderDic != null) {
+        if (pathSingleDic != null && pathSingleLabelDic != null && !isForce && pathFolderDic != null) {
             return;
         }
         pathSingleDic = new Dictionary<string, string>();
+        pathSingleLabelDic = new Dictionary<string, string>();
         pathFolderDic = new Dictionary<string, FolderKey>();
         DealWithGroupFolder();
         DealWithGroupSingle();
@@ -71,11 +73,12 @@ public class AddressableProcessor : AssetPostprocessor {
     /// 处理组文件夹
     /// </summary>
     private static void DealWithGroupFolder() {
+        bool enableHotUpdate = IsHotUpdateEnabled();
         foreach (var data in AARules.folderList) {
             if (data.number <= 0) continue;
             var path = AssetDatabase.GetAssetPath(data.folder);
             var newPath = path.Replace("\\", "/");
-            pathFolderDic.TryAdd(newPath, new FolderKey(){ number = data.number });
+            pathFolderDic.TryAdd(newPath, new FolderKey(){ number = data.number, label = enableHotUpdate && data.isRemote ? AAConst.AAGameStartUpLabel : "" });
         }
     }
     
@@ -83,7 +86,13 @@ public class AddressableProcessor : AssetPostprocessor {
     /// 处理标签数据内的文件夹数据
     /// </summary>
     private static void DealWithGroupLabel() {
+        if (!IsHotUpdateEnabled()) {
+            return;
+        }
         foreach (var data in AARules.labelList) {
+            if (string.IsNullOrWhiteSpace(data.label) || data.label == AAConst.AAGameStartUpLabel) {
+                continue;
+            }
             if (data.dirList.Count > 0) {
                 foreach (var dirData in data.dirList) {
                     if (dirData.number <= 0) continue;
@@ -99,8 +108,10 @@ public class AddressableProcessor : AssetPostprocessor {
     /// 处理单一文件内的文件夹数据
     /// </summary>
     private static void DealWithGroupSingle() {
+        bool enableHotUpdate = IsHotUpdateEnabled();
         foreach (var data in AARules.singleList.dirList) {
             var path = AssetDatabase.GetAssetPath(data.asset);
+            string label = enableHotUpdate && data.isRemote ? GetRemoteLabel(data.label) : "";
             List<string> pathList = new List<string>();
             FileUtil.TraverseDirectories(path, 0, data.number, pathList);
             foreach (var pathTp in pathList) {
@@ -108,14 +119,17 @@ public class AddressableProcessor : AssetPostprocessor {
                     var newPath = path.Replace("\\", "/");
                     string[] subDirectories = Directory.GetDirectories(pathTp, "*", SearchOption.AllDirectories);
                     pathSingleDic.TryAdd(newPath, data.searchPattern);
+                    pathSingleLabelDic.TryAdd(newPath, label);
                     foreach (var subPath in subDirectories) {
                         newPath = subPath.Replace("\\", "/");
                         pathSingleDic.TryAdd(newPath, data.searchPattern);
+                        pathSingleLabelDic.TryAdd(newPath, label);
                     }
                 }
                 else {
                     var newPath = pathTp.Replace("\\", "/");
                     pathSingleDic.TryAdd(newPath, data.searchPattern);
+                    pathSingleLabelDic.TryAdd(newPath, label);
                 }
             }
         }
@@ -147,12 +161,38 @@ public class AddressableProcessor : AssetPostprocessor {
             entry.SetLabel(label, true, true);
         }
     }
+
+    /// <summary>
+    /// 读取当前是否开启热更，用于决定自动标签是否生效。
+    /// </summary>
+    private static bool IsHotUpdateEnabled() {
+        string fullPath = Path.Combine(Directory.GetCurrentDirectory(), AAConst.AAHotUpdateSettingsPath);
+        if (!File.Exists(fullPath)) {
+            return false;
+        }
+
+        try {
+            HotUpdateSettingsData data = JsonUtility.FromJson<HotUpdateSettingsData>(File.ReadAllText(fullPath));
+            return data != null && data.enableHotUpdate;
+        }
+        catch {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 获取远端单资源自动标签；空标签归入启动前下载。
+    /// </summary>
+    private static string GetRemoteLabel(string label) {
+        return string.IsNullOrWhiteSpace(label) ? AAConst.AAGameStartUpLabel : label.Trim();
+    }
     
     private static AARules AARules;
     /// <summary>
     /// key : 地址，Vale : Search Pattern
     /// </summary>
     private static Dictionary<string, string> pathSingleDic;
+    private static Dictionary<string, string> pathSingleLabelDic;
     /// <summary>
     /// key : 地址
     /// </summary>
@@ -160,5 +200,10 @@ public class AddressableProcessor : AssetPostprocessor {
     private class FolderKey {
         public int number = 0;
         public string label = "";
+    }
+
+    [System.Serializable]
+    private class HotUpdateSettingsData {
+        public bool enableHotUpdate;
     }
 }

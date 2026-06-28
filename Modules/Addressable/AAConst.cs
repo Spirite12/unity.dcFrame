@@ -1,25 +1,53 @@
 namespace DCFrame {
     public struct AAConst {
         /// <summary>
-        /// AA Rules 规则路径
+        /// AA Rules 规则路径。
         /// </summary>
         public const string AARulesPath = "Assets/Game/Settings/Addressables/AARules.asset";
+
         /// <summary>
-        /// AA 单文件打组
+        /// AA 热更本地启动配置路径。
         /// </summary>
-        public const string AAGroupSingle = "AAGroupSingle";
+        public const string AAHotUpdateSettingsPath = "Assets/Game/Settings/Addressables/AAHotUpdateSettings.json";
+
         /// <summary>
-        /// AA 文件夹打组
+        /// AA 启动前热更标签。
         /// </summary>
-        public const string AAGroupFolder = "AAGroupFolder";
+        public const string AAGameStartUpLabel = "GameStartUp";
+
         /// <summary>
-        /// AA 标签打组
+        /// AA 本地单文件打包组。
         /// </summary>
-        public const string AAGroupLabel = "AAGroupLabel";
+        public const string AALocalSingle = "AALocalSingle";
+
         /// <summary>
-        /// AA 默认组
+        /// AA 本地文件夹打包组。
+        /// </summary>
+        public const string AALocalFolder = "AALocalFolder";
+
+        /// <summary>
+        /// AA 本地标签打包组。
+        /// </summary>
+        public const string AALocalLabel = "AALocalLabel";
+
+        /// <summary>
+        /// AA 远端单文件打包组。
+        /// </summary>
+        public const string AARemoteSingle = "AARemoteSingle";
+
+        /// <summary>
+        /// AA 远端文件夹打包组。
+        /// </summary>
+        public const string AARemoteFolder = "AARemoteFolder";
+
+        /// <summary>
+        /// AA 远端标签打包组。
+        /// </summary>
+        public const string AARemoteLabel = "AARemoteLabel";
+
+        /// <summary>
+        /// AA 默认组。
         /// </summary>
         public const string AADefaultLocalGroup = "Default Local Group";
     }
 }
-
