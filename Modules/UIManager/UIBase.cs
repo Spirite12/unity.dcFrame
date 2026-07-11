@@ -63,9 +63,24 @@ namespace DCFrame {
 				return;
 			}
 			isOpen = true;
-			await LoadPrefab();
+			closeAction = closeCallback;
+			bool isLoadSuccess;
+			try {
+				isLoadSuccess = await LoadPrefab();
+			} catch {
+				Release();
+				isOpen = false;
+				closeAction = null;
+				throw;
+			}
+			if (!isLoadSuccess) {
+				isOpen = false;
+				closeAction = null;
+				return;
+			}
 			if (!isOpen) {
 				Debug.LogError($"UIBase.Close was called during loading, Prefab Name is {AssetName}");
+				Unload();
 				return;
 			}
 			SetOrderInfo();
@@ -73,7 +88,6 @@ namespace DCFrame {
 			if (!IsInScene) {
 				UIMgr.Instance.AddToScene(this);
 			}
-			closeAction = closeCallback;
 			UIMgr.Instance.Open(this);
 			OnThisUIOpened?.Invoke(GetUIBaseType());
 			OnUIOpened?.Invoke(this);
@@ -90,10 +104,15 @@ namespace DCFrame {
 				Debug.LogError($"closing not opened ui: {AssetName}");
 				return;
 			}
-			if (notifyUIMgr) {
+			if (notifyUIMgr && UIMgr.Instance.IsInStack(this)) {
 				await UIMgr.Instance.Close(this);
 			}
 			isOpen = false;
+			if (!IsLoaded()) {
+				closeAction?.Invoke();
+				closeAction = null;
+				return;
+			}
 			OnHide();
 			if (isRelease) {
 				OnRelease();
@@ -237,9 +256,9 @@ namespace DCFrame {
 		/// <summary>
 		/// 加载预制体
 		/// </summary>
-		private async UniTask LoadPrefab() {
+		private async UniTask<bool> LoadPrefab() {
 			if (IsLoaded()) {
-				return;
+				return true;
 			}
 
 			var address = Asset.GetPrefabPath(AssetPath + "/" + AssetName);
@@ -248,9 +267,10 @@ namespace DCFrame {
 			var (prefabObj, _) = await UniTask.WhenAll(taskLoadPrefab, taskOnLoading.AsAsyncUnitUniTask());
 			if (!prefabObj) {
 				Debug.LogError($"load failed: assetPath = {AssetPath}, assetName = {AssetName}");
-				return;
+				return false;
 			}
 			uiGameObject = Object.Instantiate(prefabObj, UIMgr.Instance.deActiveRoot);
+			return true;
 		}
 
 		/// <summary>

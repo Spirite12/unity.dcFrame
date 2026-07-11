@@ -51,7 +51,14 @@ namespace DCFrame {
 		/// <summary>
 		/// 前后台切换回调函数
 		/// </summary>
-		private void OnApplicationFocus(bool pauseStatus) {
+		private void OnApplicationFocus(bool hasFocus) {
+			SetApplicationPause(!hasFocus);
+		}
+
+		/// <summary>
+		/// 更新并派发应用暂停状态。
+		/// </summary>
+		private void SetApplicationPause(bool pauseStatus) {
 			if (isPaused == pauseStatus) {
 				return;
 			}

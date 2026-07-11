@@ -33,13 +33,16 @@ namespace DCFrame {
         private void InitSafeAreaData() {
             rect = GetComponent<RectTransform>();
             vec2Origin = rect.anchoredPosition;
+            topHeight = 0;
+            centerHeight = ScreenHeight;
+            bottomHeight = 0;
 #if UNITY_EDITOR
             topHeight = vecEditorSafeArea.x;
             bottomHeight = vecEditorSafeArea.y;
             centerHeight = Screen.height - topHeight - bottomHeight;
 #else
-            bool hasSafeAres = Math.Abs(Screen.height - Screen.safeArea.height) > 20;
-            if (!hasSafeAres){
+            bool hasSafeArea = Math.Abs(Screen.height - Screen.safeArea.height) > 20;
+            if (!hasSafeArea || Screen.height <= 0){
                 return;
             }
             topHeight = (Screen.height - Screen.safeArea.height - Screen.safeArea.y) / Screen.height * ScreenHeight;
@@ -122,12 +125,12 @@ namespace DCFrame {
         /// </summary>
         private void SetModeCamera() {
             Canvas canvas = GetComponent<Canvas>();
-            if (canvas != null) {
+            if (canvas != null && canvas.worldCamera != null) {
                 Camera wc = canvas.worldCamera;
                 wc.rect = new Rect(0, bottomHeight / ScreenHeight, 1, centerHeight / ScreenHeight);
             }
             CanvasScaler scaler = GetComponent<CanvasScaler>();
-            if (scaler != null) {
+            if (scaler != null && centerHeight > 0) {
                 Vector2 sr = scaler.referenceResolution;
                 scaler.referenceResolution = new Vector2(sr.x, sr.y / centerHeight * ScreenHeight);
             }

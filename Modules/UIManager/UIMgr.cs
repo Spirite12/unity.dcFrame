@@ -71,10 +71,17 @@ namespace DCFrame {
 		}
 
 		public async UniTask Close(UIBase ui) {
+			int idx = uiStack.IndexOf(ui);
+			if (idx < 0) {
+				return;
+			}
 			if (ui.GetUIBaseType() == UIBase.UIBaseType.FullScene) {
 				await OpenBelowUI(ui);
 			}
-			int idx = uiStack.IndexOf(ui);
+			idx = uiStack.IndexOf(ui);
+			if (idx < 0) {
+				return;
+			}
 			uiStack.Remove(ui);
 			if (idx < uiStack.Count) {
 				SortAboveUI(uiStack[idx]);
