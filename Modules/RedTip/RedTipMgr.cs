@@ -12,6 +12,7 @@ namespace DCFrame {
 
         public static void Destroy() {
             redTipMain?.DestroyAllRedTip();
+            redTipMain = null;
             redTipDic.Clear();
         }
 
@@ -64,6 +65,9 @@ namespace DCFrame {
                 return;
             }
             RedTipBase redTipBase = RedTipTree.GetRedTipClass(redTipName);
+            if (redTipBase == null) {
+                return;
+            }
             redTipBase.SetNameAndParent(redTipName, parent, id);
             AddRedTipToDic(redTipBase);
         }

@@ -7,7 +7,14 @@ namespace DCFrame {
         /// 获取红点实例类
         /// </summary>
         public static RedTipBase GetRedTipClass(string redTipName) {
-            RedTipBase redTip = redTipBaseDic[redTipName].Invoke() ?? new RedTipBase();
+            if (!redTipBaseDic.TryGetValue(redTipName, out Func<RedTipBase> redTipFactory) || redTipFactory == null) {
+                UnityEngine.Debug.LogError($"未配置红点实例：{redTipName}");
+                return null;
+            }
+            RedTipBase redTip = redTipFactory.Invoke();
+            if (redTip == null) {
+                UnityEngine.Debug.LogError($"红点实例创建失败：{redTipName}");
+            }
             return redTip;
         }
 

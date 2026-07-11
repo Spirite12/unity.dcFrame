@@ -41,12 +41,14 @@ namespace DCFrame {
             };
             LoadingDic[address] = pendingRef;
             await handle.Task;
-            LoadingDic.Remove(address);
             if (handle.Status != AsyncOperationStatus.Succeeded) {
                 Debug.LogError($"加载资源失败，地址是: {address}");
+                Addressables.Release(handle);
+                LoadingDic.Remove(address);
                 return null;
             }
             GetAssetRef(address, handle, pendingRef.count);
+            LoadingDic.Remove(address);
             return handle.Result;
         }
 
