@@ -207,6 +207,10 @@ public class TableRulesTypeEnum : ITableType {
                 }
             }
         }
+        EditorUtility.SetDirty(collection.SharedData);
+        foreach (var table in collection.StringTables) {
+            EditorUtility.SetDirty(table);
+        }
         EditorUtility.SetDirty(collection);
         AssetDatabase.SaveAssets();
     }
