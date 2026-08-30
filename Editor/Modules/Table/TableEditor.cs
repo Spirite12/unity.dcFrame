@@ -13,6 +13,11 @@ public class TableEditor : Editor {
     
     public static void PackageConfig(string tableName) {
         tableRules = AssetDatabase.LoadAssetAtPath<TableRules>(Asset.GetAssetPath("Table/TableRules", Asset.PrefixPath.Settings));
+        if (tableRules == null) {
+            Debug.LogError("未找到 TableRules 配置，无法导表。");
+            return;
+        }
+        tableRuleDic.Clear();
         foreach (var rule in tableRules.tableRuleList) {
             tableRuleDic[rule.name] = rule;
         }
@@ -100,8 +105,9 @@ public class TableEditor : Editor {
         }
 
         // 检测多余的本地化数据
-        if (Directory.Exists(LocalizeConst.LocalizeTableRootPath)) {
-            var paths = Directory.GetDirectories(LocalizeConst.LocalizeTableRootPath + "/" + LocalizeConst.LocalizeStringTableName, "*", SearchOption.TopDirectoryOnly);
+        string textTableRootPath = LocalizeConst.LocalizeTableRootPath + "/" + LocalizeConst.LocalizeStringTableName;
+        if (Directory.Exists(textTableRootPath)) {
+            var paths = Directory.GetDirectories(textTableRootPath, "*", SearchOption.TopDirectoryOnly);
             foreach (var dir in paths) {
                 var folderName = Path.GetFileNameWithoutExtension(dir);
                 if (folderName == LocalizeConst.LocalizeCollectionTableName) {

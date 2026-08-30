@@ -24,6 +24,7 @@ public class LocalizeEditor : Editor {
         int currentIndex = 0;
         try {
             foreach (var tableFolder in tableFolders) {
+                currentIndex++;
                 string tableName = Path.GetFileName(tableFolder);
                 if (tableName == LocalizeConst.LocalizeStringTableName) {
                     continue;
@@ -59,8 +60,13 @@ public class LocalizeEditor : Editor {
                     }
                     // 移动资源
                     string assetPath = AssetDatabase.GetAssetPath(assetTable);
-                    string newPath = $"{assetTable}/{tableName}_{langName}.asset";
-                    AssetDatabase.MoveAsset(assetPath, newPath);
+                    string newPath = $"{tableFolder}/{LocalizeConst.LocalizeCollectionTableName}/{tableName}_{langName}.asset";
+                    if (!string.Equals(assetPath, newPath, System.StringComparison.Ordinal)) {
+                        string moveError = AssetDatabase.MoveAsset(assetPath, newPath);
+                        if (!string.IsNullOrEmpty(moveError)) {
+                            throw new System.InvalidOperationException($"移动本地化资源表失败：{moveError}");
+                        }
+                    }
                     // 遍历资源
                     var assets = Directory.GetFiles(langFolder);
                     foreach (var file in assets) {
@@ -86,8 +92,8 @@ public class LocalizeEditor : Editor {
             AssetDatabase.StopAssetEditing();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log("执行成功");
         }
+        Debug.Log("执行成功");
     }
     
     #region 右键功能
