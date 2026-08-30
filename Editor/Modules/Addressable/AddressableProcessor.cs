@@ -26,6 +26,7 @@ public class AddressableProcessor : AssetPostprocessor {
     /// 检查资源是否可以标记
     /// </summary>
     private static void CheckAsset(string assetPath) {
+        assetPath = assetPath.Replace("\\", "/");
         var path = Path.GetDirectoryName(assetPath);
         if (path == null) {
             return;
@@ -40,12 +41,14 @@ public class AddressableProcessor : AssetPostprocessor {
             }
         }else if (Directory.Exists(assetPath)) {
             foreach (var keyValue in pathFolderDic) {
-                if (assetPath.StartsWith(keyValue.Key)) {
-                    string relativePath = Path.GetRelativePath(keyValue.Key, assetPath);
-                    int depth = relativePath.Split(Path.DirectorySeparatorChar).Length;
-                    if (depth == keyValue.Value.number) {
-                        MarkAsAddressable(assetPath, keyValue.Value.label);
-                    }
+                string folderPath = keyValue.Key.TrimEnd('/');
+                if (assetPath != folderPath && !assetPath.StartsWith(folderPath + "/", System.StringComparison.Ordinal)) {
+                    continue;
+                }
+                string relativePath = Path.GetRelativePath(folderPath, assetPath);
+                int depth = relativePath.Split(Path.DirectorySeparatorChar).Length;
+                if (depth == keyValue.Value.number) {
+                    MarkAsAddressable(assetPath, keyValue.Value.label);
                 }
             }
         }

@@ -11,15 +11,22 @@ namespace DCFrame {
         /// </summary>
         public static async UniTask<bool> LoadSettings() {
             TextAsset settingsAsset = await Asset.LoadAsset<TextAsset>(AAConst.AAHotUpdateSettingsPath);
-            if (settingsAsset == null || string.IsNullOrWhiteSpace(settingsAsset.text)) {
-                enableHotUpdate = false;
-                Debug.LogWarning("本地热更启动配置为空，已关闭热更。");
-                return false;
-            }
+            try {
+                if (settingsAsset == null || string.IsNullOrWhiteSpace(settingsAsset.text)) {
+                    enableHotUpdate = false;
+                    Debug.LogWarning("本地热更启动配置为空，已关闭热更。");
+                    return false;
+                }
 
-            HotUpdateSettingsData settingsData = JsonUtility.FromJson<HotUpdateSettingsData>(settingsAsset.text);
-            enableHotUpdate = settingsData != null && settingsData.enableHotUpdate;
-            return enableHotUpdate;
+                HotUpdateSettingsData settingsData = JsonUtility.FromJson<HotUpdateSettingsData>(settingsAsset.text);
+                enableHotUpdate = settingsData != null && settingsData.enableHotUpdate;
+                return enableHotUpdate;
+            }
+            finally {
+                if (settingsAsset != null) {
+                    Asset.Release(AAConst.AAHotUpdateSettingsPath);
+                }
+            }
         }
 
         /// <summary>
