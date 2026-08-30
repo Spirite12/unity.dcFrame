@@ -113,9 +113,9 @@ namespace DCFrame {
                 rect.offsetMin = new Vector2(0, -bottomHeight);
                 rect.offsetMax = new Vector2(0, 0);
             } else {
-                rect.anchoredPosition = new Vector2(vec2Origin.x, vec2Origin.y + -topHeight);
+                rect.anchoredPosition = new Vector2(vec2Origin.x, vec2Origin.y - bottomHeight);
                 var sizeDelta = rect.sizeDelta;
-                sizeDelta = new Vector2(sizeDelta.x, sizeDelta.y + topHeight);
+                sizeDelta = new Vector2(sizeDelta.x, sizeDelta.y + bottomHeight);
                 rect.sizeDelta = sizeDelta;
             }
         }

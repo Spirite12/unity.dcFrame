@@ -9,10 +9,6 @@ namespace DCFrame {
     /// </summary>
     public class CacheBase {
         public CacheBase() {
-            if (isInit) {
-                return;
-            }
-            isInit = true;
             className = GetType().Name;
             GetFileSave();
             CacheMgr.AddCacheBase(this);
@@ -54,8 +50,8 @@ namespace DCFrame {
             }
             string content = FileUtil.ReadFile(path);
             // 低于当前版本则不读取
-            int versionValue = JsonUtility.FromJson<CacheBase>(content).version;
-            if (versionValue < version) {
+            CacheVersionData fileData = JsonUtility.FromJson<CacheVersionData>(content);
+            if (fileData == null || fileData.version < version) {
                 return;
             }
             JsonUtility.FromJsonOverwrite(content, this);
@@ -70,7 +66,11 @@ namespace DCFrame {
         /// </summary>
         public CacheMgr.SaveType saveType = CacheMgr.SaveType.PlayerId;
         
+        [System.Serializable]
+        private class CacheVersionData {
+            public int version = 0;
+        }
+
         private readonly string className;
-        private static bool isInit = false;
     }
 }

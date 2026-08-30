@@ -41,6 +41,22 @@ namespace DCFrame {
 		private void OnApplicationQuit() {
 			isPaused = false;
 			OnApplicationQuitEvent?.Invoke();
+			Shutdown();
+		}
+
+		protected override void OnDestroy() {
+			Shutdown();
+			base.OnDestroy();
+		}
+
+		/// <summary>
+		/// 释放框架运行时资源；应用退出与场景销毁共用，避免重复执行。
+		/// </summary>
+		private void Shutdown() {
+			if (isShutdown) {
+				return;
+			}
+			isShutdown = true;
 			GCCollect.Destroy();
 			TextFilter.Destroy();
 			UIMgr.Instance.Shut();
@@ -70,5 +86,6 @@ namespace DCFrame {
 		/// 是否暂停中
 		/// </summary>
 		private bool isPaused = false;
+		private bool isShutdown = false;
 	}
 }
